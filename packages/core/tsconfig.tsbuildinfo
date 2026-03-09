@@ -1,1 +1,1 @@
-{"root":["./src/config.ts","./src/index.ts","./src/logger.ts","./src/pipeline.ts","./src/plugin-loader.ts","./src/types.ts"],"version":"5.9.3"}
+{"root":["./src/app-api.ts","./src/artifacts.ts","./src/config.ts","./src/devices.ts","./src/index.ts","./src/logger.ts","./src/pipeline.ts","./src/plugin-loader.ts","./src/types.ts"],"version":"5.9.3"}

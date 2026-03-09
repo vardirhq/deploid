@@ -8,6 +8,8 @@ Deploid is a unified build pipeline for web apps that turns them into Android ap
 
 - [Getting Started](getting-started.md)
 - [Architecture](architecture.md)
+- [App API](api.md)
+- [Local Daemon Mode](api.md#local-daemon-mode)
 - [Configuration](configuration.md)
 - [Plugins](plugins.md)
 - [CLI Reference](cli-reference.md)
@@ -28,8 +30,11 @@ Deploid automates the entire process of turning a web app into a ready-to-ship A
 - **📱 iOS Preparation**: Complete iOS project setup for Mac handoff
 - **🚀 Deployment**: Direct APK deployment to Android devices
 - **🐛 Debug Tools**: Network debugging and troubleshooting components
-- **☁️ Publishing**: Planned for future release
+- **🚦 Release Setup**: Signing, env, and publish scaffolding with `deploid release init`
+- **☁️ Publishing**: GitHub Releases and Play Console uploads
 - **🔧 Plugin Architecture**: Extensible and modular design
+- **🧱 Plugin Authoring**: Scaffold and validate external plugins
+- **🔌 Local Daemon**: Optional loopback HTTP surface for external apps
 - **⚙️ CI/CD Ready**: GitHub Actions generator
 
 ### Supported Frameworks
@@ -43,6 +48,18 @@ Deploid automates the entire process of turning a web app into a ready-to-ship A
 
 - **Capacitor** - Native WebView wrapper
 
+<<<<<<< Updated upstream
+=======
+### Desktop GUI
+
+Deploid Studio is available as an experimental desktop client on top of the CLI/core workflow stack:
+
+```bash
+npm install -g @deploid/studio
+deploid-studio
+```
+
+>>>>>>> Stashed changes
 ## 🚀 Quick Start
 
 ```bash
@@ -60,6 +77,24 @@ cp your-logo.svg assets/logo.svg
 
 # Generate all required assets
 deploid assets
+
+# Scaffold release config
+deploid release init --yes
+
+# Bump semver + Android version metadata
+deploid version --patch
+
+# Turn release notes into CHANGELOG entries
+deploid changelog --from-git
+
+# Run the full release workflow
+deploid ship --patch --from-git --dry-run
+
+# Inspect generated outputs
+deploid artifacts list
+
+# Generate GitHub Actions release workflow
+deploid ci init github
 
 # Package for Android
 deploid package
@@ -91,6 +126,12 @@ deploid/
 | Command              | Description                                 |
 | -------------------- | ------------------------------------------- |
 | `deploid init`    | Setup config and base folders               |
+| `deploid release init` | Scaffold signing, env templates, and publish placeholders |
+| `deploid version` | Sync semver, Android version metadata, and release notes scaffolding |
+| `deploid changelog` | Turn release notes into `CHANGELOG.md` entries |
+| `deploid ship` | Run the end-to-end Android release workflow |
+| `deploid artifacts` | List, inspect, and clean generated outputs |
+| `deploid ci init github` | Generate GitHub Actions release workflow scaffolding |
 | `deploid assets`  | Generate all required icons and screenshots |
 | `deploid package` | Wrap app for Android (Capacitor)             |
 | `deploid build`   | Build APK/AAB (debug/release)               |
@@ -102,7 +143,7 @@ deploid/
 | `deploid ios`     | Prepare iOS project for Mac handoff          |
 | `deploid ios:assets` | Not implemented in 2.0                    |
 | `deploid ios:handbook` | Generate iOS handoff documentation      |
-| `deploid publish` | Not implemented in 2.0                       |
+| `deploid publish` | Upload APK/AAB to GitHub Releases or Play Console |
 
 ## 🎯 Current Status
 
@@ -116,9 +157,10 @@ deploid/
 - [x] iOS project preparation
 
 🔄 **Next: Milestone 2 — Release + CI**
-- [ ] Signing + release builds
-- [ ] Play/GitHub publishing
-- [ ] Auto GitHub Actions generator
+- [x] Signing + release scaffolding
+- [x] Play/GitHub publishing
+- [x] Version orchestration
+- [x] Auto GitHub Actions generator
 
 ## 🧠 Vision
 

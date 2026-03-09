@@ -1,6 +1,8 @@
 import { PipelineStep } from './pipeline.js';
 import { DeploidConfig, DeploidPlugin } from './types.js';
 import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 export async function loadPlugin(pluginName: string, config: DeploidConfig): Promise<PipelineStep> {
   // Keep config in signature for future plugin selection hooks.
@@ -19,6 +21,11 @@ export async function loadPlugin(pluginName: string, config: DeploidConfig): Pro
   const localPluginPath = new URL(`../../plugins/${pluginName}/dist/index.js`, import.meta.url).pathname;
   if (existsSync(localPluginPath)) {
     return instantiatePlugin(await import(localPluginPath), pluginName);
+  }
+
+  const workspacePluginPath = path.resolve(process.cwd(), 'packages', 'plugins', pluginName, 'dist', 'index.js');
+  if (existsSync(workspacePluginPath)) {
+    return instantiatePlugin(await import(pathToFileURL(workspacePluginPath).href), pluginName);
   }
 
   throw new Error(`Plugin "${pluginName}" not found. Expected package "${packageName}".`);

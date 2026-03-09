@@ -6,6 +6,20 @@ interface PipelineStep {
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+function getCapacitorPreferencesRange(packageJson: any): string {
+  const sources = [
+    packageJson?.dependencies?.['@capacitor/core'],
+    packageJson?.devDependencies?.['@capacitor/core']
+  ];
+
+  const combined = sources.filter((value) => typeof value === 'string').join(' ');
+  const majorMatch = combined.match(/[6-8]/);
+  if (!majorMatch) {
+    return '^8.0.0';
+  }
+  return `^${majorMatch[0]}.0.0`;
+}
+
 const storagePlugin = (): PipelineStep => async ({ logger, config, cwd }: any) => {
   logger.info('storage-plugin: setting up cross-platform storage utilities');
   
@@ -44,7 +58,7 @@ const storagePlugin = (): PipelineStep => async ({ logger, config, cwd }: any) =
     
     // Add storage dependencies
     const storageDeps = {
-      '@capacitor/preferences': '^6.0.0'
+      '@capacitor/preferences': getCapacitorPreferencesRange(packageJson)
     };
     
     if (!packageJson.dependencies) {

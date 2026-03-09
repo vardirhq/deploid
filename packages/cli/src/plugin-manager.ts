@@ -7,6 +7,11 @@ export interface PluginManagerOptions {
   list?: boolean;
   install?: string;
   remove?: string;
+  init?: string;
+  validate?: string | boolean;
+  dir?: string;
+  force?: boolean;
+  json?: boolean;
 }
 
 // Available plugins with their details
@@ -16,9 +21,19 @@ const availablePlugins = {
     description: 'Generate app icons and assets from your logo',
     required: true
   },
+  'artifacts': {
+    name: '@deploid/plugin-artifacts',
+    description: 'Inspect and clean generated Android, desktop, and asset outputs',
+    required: false
+  },
   'packaging-capacitor': {
     name: '@deploid/plugin-packaging-capacitor',
     description: 'Package your app with Capacitor',
+    required: false
+  },
+  'packaging-electron': {
+    name: '@deploid/plugin-packaging-electron',
+    description: 'Create Electron desktop apps for Windows, macOS, and Linux',
     required: false
   },
   'build-android': {
@@ -41,6 +56,36 @@ const availablePlugins = {
     description: 'Add network debugging tools to your app',
     required: false
   },
+  'doctor': {
+    name: '@deploid/plugin-doctor',
+    description: 'Audit project readiness, dependencies, and Android tooling',
+    required: false
+  },
+  'release-init': {
+    name: '@deploid/plugin-release-init',
+    description: 'Scaffold Android signing, release metadata, and publish placeholders',
+    required: false
+  },
+  'publish': {
+    name: '@deploid/plugin-publish',
+    description: 'Upload APK/AAB artifacts to GitHub Releases or Play Console',
+    required: false
+  },
+  'version': {
+    name: '@deploid/plugin-version',
+    description: 'Sync semver, Android versionCode/name, and release notes scaffolding',
+    required: false
+  },
+  'changelog': {
+    name: '@deploid/plugin-changelog',
+    description: 'Generate CHANGELOG entries from release notes and git history',
+    required: false
+  },
+  'ci-init': {
+    name: '@deploid/plugin-ci-init',
+    description: 'Generate GitHub Actions workflow scaffolding for Deploid releases',
+    required: false
+  },
   'storage': {
     name: '@deploid/plugin-storage',
     description: 'Cross-platform storage utilities for web and native',
@@ -50,9 +95,11 @@ const availablePlugins = {
 
 export async function managePlugins(options: PluginManagerOptions): Promise<void> {
   const cwd = process.cwd();
-  
+
+  const requiresProject = !options.init && !options.validate;
+
   // Check if we're in a Deploid project
-  if (!fs.existsSync(path.join(cwd, 'deploid.config.ts'))) {
+  if (requiresProject && !hasDeploidConfig(cwd)) {
     console.error('❌ Not in a Deploid project. Run "deploid init" first.');
     process.exit(1);
   }
@@ -63,6 +110,12 @@ export async function managePlugins(options: PluginManagerOptions): Promise<void
     await installPlugin(cwd, options.install);
   } else if (options.remove) {
     await removePlugin(cwd, options.remove);
+  } else if (options.init) {
+    const { initPluginScaffold } = await import('./plugin-tools.js');
+    await initPluginScaffold(options.init, { dir: options.dir, force: options.force });
+  } else if (options.validate) {
+    const { validatePluginScaffold } = await import('./plugin-tools.js');
+    await validatePluginScaffold(typeof options.validate === 'string' ? options.validate : undefined, { json: options.json });
   } else {
     // Interactive mode
     await interactivePluginManager(cwd);
@@ -81,6 +134,11 @@ async function listPlugins(cwd: string): Promise<void> {
     console.log(`   Package: ${plugin.name}`);
     console.log(`   Key: ${key}\n`);
   }
+}
+
+function hasDeploidConfig(cwd: string): boolean {
+  return ['deploid.config.ts', 'deploid.config.js', 'deploid.config.mjs', 'deploid.config.cjs']
+    .some((candidate) => fs.existsSync(path.join(cwd, candidate)));
 }
 
 async function installPlugin(cwd: string, pluginKey: string): Promise<void> {

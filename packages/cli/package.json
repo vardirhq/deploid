@@ -1,6 +1,6 @@
 {
   "name": "@deploid/cli",
-  "version": "2.0.0",
+  "version": "2.0.20",
   "description": "Build → package → sign → publish web apps to Android",
   "keywords": [
     "android",
@@ -41,14 +41,22 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@deploid/core": "workspace:*",
+    "@deploid/core": "2.0.2",
     "commander": "^12.1.0",
-    "@deploid/plugin-assets": "workspace:*",
-    "@deploid/plugin-build-android": "workspace:*",
-    "@deploid/plugin-debug-network": "workspace:*",
-    "@deploid/plugin-deploy-android": "workspace:*",
-    "@deploid/plugin-packaging-capacitor": "workspace:*",
-    "@deploid/plugin-prepare-ios": "workspace:*",
+    "@deploid/plugin-assets": "2.0.0",
+    "@deploid/plugin-artifacts": "2.0.0",
+    "@deploid/plugin-build-android": "2.0.0",
+    "@deploid/plugin-changelog": "2.0.0",
+    "@deploid/plugin-debug-network": "2.0.0",
+    "@deploid/plugin-doctor": "2.0.3",
+    "@deploid/plugin-deploy-android": "2.0.1",
+    "@deploid/plugin-ci-init": "2.0.0",
+    "@deploid/plugin-packaging-capacitor": "2.0.0",
+    "@deploid/plugin-packaging-electron": "2.0.6",
+    "@deploid/plugin-prepare-ios": "2.0.0",
+    "@deploid/plugin-publish": "2.0.0",
+    "@deploid/plugin-release-init": "2.0.0",
+    "@deploid/plugin-version": "2.0.0",
     "execa": "^8.0.1"
   },
   "engines": {
