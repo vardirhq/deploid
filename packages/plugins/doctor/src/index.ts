@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 type CheckStatus = 'pass' | 'warn' | 'fail';
@@ -108,6 +109,8 @@ interface ProjectState {
 }
 
 const CONFIG_CANDIDATES = ['deploid.config.ts', 'deploid.config.js', 'deploid.config.mjs', 'deploid.config.cjs'];
+const ANDROID_SDK_LICENSE_HASHES = ['8933bad161af4178b1185d1a37fbf41ea5269c55', 'd56f5187479451eabf01fb78af6dfcb131a6481e'];
+const ANDROID_SDK_PREVIEW_LICENSE_HASHES = ['84831b9409646a918e30573bab4c9c91346d8abd'];
 const WORKFLOW_TITLES: Record<WorkflowId, string> = {
   init: 'Project setup',
   build: 'Android build',
@@ -389,9 +392,14 @@ function collectToolingChecks(state: ProjectState): CheckResult[] {
     checkCommand('node', ['--version'], 'Node.js', 'Required to run Deploid.', ['init', 'build', 'release', 'deploy', 'desktop']),
     checkNpm(),
     checkCommand('npx', ['--version'], 'npx', 'Used to invoke Capacitor CLI commands.', ['build', 'release']),
+    checkJavaHome(),
     checkJava(),
     checkAdb(),
-    checkAndroidSdk(),
+    checkAndroidSdk(state),
+    checkAndroidLocalProperties(state),
+    checkAndroidSdkWriteAccess(state),
+    checkAndroidSdkLicenses(state),
+    checkSdkManager(state),
     checkGradleWrapper(state)
   ];
 }
@@ -447,6 +455,24 @@ function applyFixes(state: ProjectState, checks: CheckResult[]): FixResult[] {
     const hadConfig = fs.existsSync(state.capacitorConfigPath);
     fs.writeFileSync(state.capacitorConfigPath, `${JSON.stringify(nextConfig, null, 2)}\n`);
     fixes.push({ id: 'capacitor-config', title: 'Capacitor config', status: 'applied', message: `${hadConfig ? 'Synced' : 'Created'} capacitor.config.json.` });
+  }
+
+  const sdkResolution = resolveAndroidSdk(state);
+  const shouldWriteLocalProperties = checks.some((check) => check.id === 'android-local-properties' && check.fixable && check.status !== 'pass');
+  if (shouldWriteLocalProperties && sdkResolution.sdkPath && fs.existsSync(state.androidDir)) {
+    const localPropertiesPath = path.join(state.androidDir, 'local.properties');
+    writeSdkDirProperty(localPropertiesPath, sdkResolution.sdkPath);
+    fixes.push({ id: 'android-local-properties', title: 'Android SDK path', status: 'applied', message: `Wrote android/local.properties with sdk.dir=${sdkResolution.sdkPath}.` });
+  }
+
+  const shouldWriteLicenses = checks.some((check) => check.id === 'android-sdk-licenses' && check.fixable && check.status !== 'pass');
+  if (shouldWriteLicenses && sdkResolution.sdkPath) {
+    try {
+      writeAndroidLicenseFiles(sdkResolution.sdkPath);
+      fixes.push({ id: 'android-sdk-licenses', title: 'Android SDK licenses', status: 'applied', message: 'Wrote standard Android SDK license hash files.' });
+    } catch (error) {
+      fixes.push({ id: 'android-sdk-licenses', title: 'Android SDK licenses', status: 'failed', message: error instanceof Error ? error.message : String(error) });
+    }
   }
 
   if (state.configPath && state.config) {
@@ -821,6 +847,33 @@ function checkNpm(): CheckResult {
   return check;
 }
 
+function checkJavaHome(): CheckResult {
+  const javaHome = process.env.JAVA_HOME;
+  if (!javaHome) {
+    const javaPath = findExecutable('java');
+    if (!javaPath) {
+      return fail('java-home', 'JAVA_HOME', 'JAVA_HOME is not set and java was not found on PATH.', ['build', 'release'], 'Install JDK 17+ or set JAVA_HOME to a valid JDK directory.');
+    }
+    const inferred = inferJavaHome(javaPath);
+    return inferred
+      ? pass('java-home', 'JAVA_HOME', `JAVA_HOME is not set; inferred ${inferred} from PATH.`, ['build', 'release'])
+      : warn('java-home', 'JAVA_HOME', 'JAVA_HOME is not set, but java is available on PATH.', ['build', 'release'], `java resolves to ${javaPath}.`);
+  }
+
+  if (!isValidJavaHome(javaHome)) {
+    const javaPath = findExecutable('java');
+    return fail(
+      'java-home',
+      'JAVA_HOME',
+      `JAVA_HOME points to ${javaHome}, but its java executable is missing.`,
+      ['build', 'release'],
+      javaPath ? `Fix JAVA_HOME or unset it so Deploid can use ${javaPath}.` : 'Set JAVA_HOME to a valid JDK 17+ directory.'
+    );
+  }
+
+  return pass('java-home', 'JAVA_HOME', `JAVA_HOME points to ${javaHome}.`, ['build', 'release']);
+}
+
 function checkJava(): CheckResult {
   const result = spawnSync('java', ['-version'], { encoding: 'utf8' });
   if (result.status !== 0) {
@@ -851,37 +904,121 @@ function checkAdb(): CheckResult {
   return pass('adb', 'ADB', `ADB is available with ${lines.length} connected device(s).`, ['deploy'], version.details);
 }
 
-function checkAndroidSdk(): CheckResult {
-  const envHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
-  const sdkPath = envHome || path.join(process.env.HOME || '', 'Android', 'Sdk');
-
-  if (!sdkPath || !fs.existsSync(sdkPath)) {
+function checkAndroidSdk(state: ProjectState): CheckResult {
+  const resolution = resolveAndroidSdk(state);
+  if (!resolution.sdkPath) {
     return fail(
       'android-sdk',
       'Android SDK',
       'Android SDK directory was not found.',
       ['build', 'release', 'deploy'],
-      'Set ANDROID_HOME or ANDROID_SDK_ROOT, or install the SDK in ~/Android/Sdk.'
+      `Set ANDROID_HOME/ANDROID_SDK_ROOT, create android/local.properties, or install the SDK in one of: ${resolution.searched.join(', ')}.`,
+      true
     );
   }
 
-  const platformToolsPath = path.join(sdkPath, 'platform-tools');
+  const envHome = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  if (envHome && envHome !== resolution.sdkPath && !fs.existsSync(envHome)) {
+    return warn(
+      'android-sdk',
+      'Android SDK',
+      `Android SDK found at ${resolution.sdkPath}, but environment points to missing ${envHome}.`,
+      ['build', 'release', 'deploy'],
+      'Update ANDROID_HOME/ANDROID_SDK_ROOT or run `deploid doctor --fix` to write android/local.properties.',
+      true
+    );
+  }
+
+  const platformToolsPath = path.join(resolution.sdkPath, 'platform-tools');
   if (!fs.existsSync(platformToolsPath)) {
     return warn(
       'android-sdk',
       'Android SDK',
-      `SDK found at ${sdkPath}, but platform-tools is missing.`,
+      `SDK found at ${resolution.sdkPath}, but platform-tools is missing.`,
       ['build', 'release', 'deploy'],
       'Install Android SDK Platform Tools to enable adb-based workflows.'
     );
   }
 
-  const hasBuildTools = fs.existsSync(path.join(sdkPath, 'build-tools'));
+  const hasBuildTools = fs.existsSync(path.join(resolution.sdkPath, 'build-tools'));
   if (!hasBuildTools) {
-    return warn('android-sdk', 'Android SDK', `SDK found at ${sdkPath}, but build-tools is missing.`, ['build', 'release']);
+    return warn('android-sdk', 'Android SDK', `SDK found at ${resolution.sdkPath}, but build-tools is missing.`, ['build', 'release'], 'Install Android SDK Build Tools or ensure the SDK directory is writable so Gradle can install them.');
   }
 
-  return pass('android-sdk', 'Android SDK', `SDK found at ${sdkPath}.`, ['build', 'release', 'deploy']);
+  return pass('android-sdk', 'Android SDK', `SDK found at ${resolution.sdkPath}.`, ['build', 'release', 'deploy'], resolution.source);
+}
+
+function checkAndroidLocalProperties(state: ProjectState): CheckResult {
+  if (!fs.existsSync(state.androidDir)) {
+    return warn('android-local-properties', 'Android SDK path', 'Skipped because android/ has not been generated yet.', ['build', 'release']);
+  }
+  const resolution = resolveAndroidSdk(state);
+  if (!resolution.sdkPath) {
+    return warn('android-local-properties', 'Android SDK path', 'Cannot write local.properties until an Android SDK is detected.', ['build', 'release'], undefined, true);
+  }
+
+  const localPropertiesPath = path.join(state.androidDir, 'local.properties');
+  const configured = readSdkDirProperty(localPropertiesPath);
+  if (configured === resolution.sdkPath) {
+    return pass('android-local-properties', 'Android SDK path', 'android/local.properties points at the detected SDK.', ['build', 'release']);
+  }
+
+  if (configured && !fs.existsSync(configured)) {
+    return warn('android-local-properties', 'Android SDK path', `android/local.properties points to missing SDK ${configured}.`, ['build', 'release'], `Run \`deploid doctor --fix\` to set sdk.dir=${resolution.sdkPath}.`, true);
+  }
+
+  return warn('android-local-properties', 'Android SDK path', 'android/local.properties does not pin the detected SDK path.', ['build', 'release'], `Run \`deploid doctor --fix\` to set sdk.dir=${resolution.sdkPath}.`, true);
+}
+
+function checkAndroidSdkWriteAccess(state: ProjectState): CheckResult {
+  const resolution = resolveAndroidSdk(state);
+  if (!resolution.sdkPath) {
+    return warn('android-sdk-permissions', 'SDK permissions', 'Skipped because no Android SDK directory was found.', ['build', 'release']);
+  }
+  try {
+    fs.accessSync(resolution.sdkPath, fs.constants.W_OK);
+    return pass('android-sdk-permissions', 'SDK permissions', `SDK directory is writable: ${resolution.sdkPath}.`, ['build', 'release']);
+  } catch {
+    return warn(
+      'android-sdk-permissions',
+      'SDK permissions',
+      `SDK directory is not writable: ${resolution.sdkPath}.`,
+      ['build', 'release'],
+      `Fix ownership/permissions (for example: sudo chown -R $USER ${resolution.sdkPath}) or use a user-writable SDK.`
+    );
+  }
+}
+
+function checkAndroidSdkLicenses(state: ProjectState): CheckResult {
+  const resolution = resolveAndroidSdk(state);
+  if (!resolution.sdkPath) {
+    return warn('android-sdk-licenses', 'SDK licenses', 'Skipped because no Android SDK directory was found.', ['build', 'release'], undefined, true);
+  }
+  if (hasAndroidLicenseHashes(resolution.sdkPath)) {
+    return pass('android-sdk-licenses', 'SDK licenses', 'Android SDK license hashes are present.', ['build', 'release']);
+  }
+  return warn(
+    'android-sdk-licenses',
+    'SDK licenses',
+    'Android SDK license hashes were not found.',
+    ['build', 'release'],
+    'Run sdkmanager --licenses or `deploid doctor --fix` to write the standard SDK license hash files.',
+    true
+  );
+}
+
+function checkSdkManager(state: ProjectState): CheckResult {
+  const sdkManager = findSdkManager(resolveAndroidSdk(state).sdkPath);
+  if (sdkManager) {
+    return pass('sdkmanager', 'sdkmanager', `sdkmanager is available at ${sdkManager}.`, ['build', 'release']);
+  }
+  return warn(
+    'sdkmanager',
+    'sdkmanager',
+    'sdkmanager was not found.',
+    ['build', 'release'],
+    'Install Android SDK Command-line Tools. If only licenses are missing, `deploid doctor --fix` can write known license hashes without sdkmanager.'
+  );
 }
 
 function checkGradleWrapper(state: ProjectState): CheckResult {
@@ -899,6 +1036,107 @@ function checkGradleWrapper(state: ProjectState): CheckResult {
   }
   const firstLine = `${result.stdout || ''}${result.stderr || ''}`.split('\n').find((line) => line.trim().length > 0)?.trim();
   return pass('gradle-wrapper', 'Gradle wrapper', 'Gradle wrapper is present.', ['build', 'release'], firstLine);
+}
+
+
+interface AndroidSdkResolution {
+  sdkPath?: string;
+  source?: string;
+  searched: string[];
+}
+
+function resolveAndroidSdk(state: ProjectState): AndroidSdkResolution {
+  const localPropertiesPath = path.join(state.androidDir, 'local.properties');
+  const localSdk = readSdkDirProperty(localPropertiesPath);
+  const home = os.homedir();
+  const candidates: Array<{ value?: string; source: string }> = [
+    { value: process.env.ANDROID_HOME, source: 'ANDROID_HOME' },
+    { value: process.env.ANDROID_SDK_ROOT, source: 'ANDROID_SDK_ROOT' },
+    { value: localSdk, source: 'android/local.properties' },
+    { value: home ? path.join(home, 'Android', 'Sdk') : undefined, source: '~/Android/Sdk' },
+    { value: '/opt/android-sdk', source: '/opt/android-sdk' },
+    { value: '/usr/lib/android-sdk', source: '/usr/lib/android-sdk' }
+  ];
+  const seen = new Set<string>();
+  const searched: string[] = [];
+  for (const candidate of candidates) {
+    if (!candidate.value || seen.has(candidate.value)) continue;
+    seen.add(candidate.value);
+    searched.push(candidate.value);
+    if (fs.existsSync(candidate.value)) {
+      return { sdkPath: candidate.value, source: candidate.source, searched };
+    }
+  }
+  return { searched };
+}
+
+function readSdkDirProperty(filePath: string): string | undefined {
+  if (!fs.existsSync(filePath)) return undefined;
+  const line = safeRead(filePath).split('\n').find((entry) => entry.trim().startsWith('sdk.dir='));
+  return line?.slice('sdk.dir='.length).trim().replace(/\\:/g, ':').replace(/\\\\/g, '\\');
+}
+
+function writeSdkDirProperty(filePath: string, sdkPath: string): void {
+  const sdkLine = `sdk.dir=${escapePropertiesPath(sdkPath)}`;
+  const existing = fs.existsSync(filePath) ? safeRead(filePath) : '';
+  const next = existing.match(/^sdk\.dir=/m)
+    ? existing.replace(/^sdk\.dir=.*$/m, sdkLine)
+    : `${existing}${existing.length > 0 && !existing.endsWith('\n') ? '\n' : ''}${sdkLine}\n`;
+  fs.writeFileSync(filePath, next);
+}
+
+function hasAndroidLicenseHashes(sdkPath: string): boolean {
+  const licensePath = path.join(sdkPath, 'licenses', 'android-sdk-license');
+  if (!fs.existsSync(licensePath)) return false;
+  const licenseText = safeRead(licensePath);
+  return ANDROID_SDK_LICENSE_HASHES.some((hash) => licenseText.includes(hash));
+}
+
+function writeAndroidLicenseFiles(sdkPath: string): void {
+  const licensesDir = path.join(sdkPath, 'licenses');
+  fs.mkdirSync(licensesDir, { recursive: true });
+  fs.writeFileSync(path.join(licensesDir, 'android-sdk-license'), `${ANDROID_SDK_LICENSE_HASHES.join('\n')}\n`);
+  fs.writeFileSync(path.join(licensesDir, 'android-sdk-preview-license'), `${ANDROID_SDK_PREVIEW_LICENSE_HASHES.join('\n')}\n`);
+}
+
+function findSdkManager(sdkPath?: string): string | undefined {
+  const fromPath = findExecutable('sdkmanager');
+  if (fromPath) return fromPath;
+  if (!sdkPath) return undefined;
+  const candidates = [
+    path.join(sdkPath, 'cmdline-tools', 'latest', 'bin', sdkManagerExecutableName()),
+    path.join(sdkPath, 'cmdline-tools', 'bin', sdkManagerExecutableName()),
+    path.join(sdkPath, 'tools', 'bin', sdkManagerExecutableName())
+  ];
+  return candidates.find((candidate) => fs.existsSync(candidate));
+}
+
+function findExecutable(command: string): string | undefined {
+  const result = spawnSync(process.platform === 'win32' ? 'where' : 'which', [command], { encoding: 'utf8' });
+  if (result.status !== 0) return undefined;
+  return `${result.stdout || ''}`.split('\n').find((line) => line.trim().length > 0)?.trim();
+}
+
+function inferJavaHome(javaPath: string): string | undefined {
+  const realPath = fs.realpathSync(javaPath);
+  const javaHome = path.dirname(path.dirname(realPath));
+  return isValidJavaHome(javaHome) ? javaHome : undefined;
+}
+
+function isValidJavaHome(javaHome: string): boolean {
+  return fs.existsSync(path.join(javaHome, 'bin', javaExecutableName()));
+}
+
+function javaExecutableName(): string {
+  return process.platform === 'win32' ? 'java.exe' : 'java';
+}
+
+function sdkManagerExecutableName(): string {
+  return process.platform === 'win32' ? 'sdkmanager.bat' : 'sdkmanager';
+}
+
+function escapePropertiesPath(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/:/g, '\\:');
 }
 
 function countStatuses(checks: CheckResult[]): Record<CheckStatus, number> {
@@ -943,7 +1181,7 @@ function fail(
 }
 
 function categoryFor(id: string): CheckCategory {
-  if (['node', 'npm', 'npx', 'java', 'adb', 'android-sdk', 'gradle-wrapper'].includes(id)) return 'tooling';
+  if (['node', 'npm', 'npx', 'java', 'java-home', 'adb', 'android-sdk', 'android-local-properties', 'android-sdk-permissions', 'android-sdk-licenses', 'sdkmanager', 'gradle-wrapper'].includes(id)) return 'tooling';
   if (['capacitor-dependency', 'electron-dependency', 'plugin-state'].includes(id)) return 'plugins';
   if (['android-signing', 'versioning', 'play-service-account', 'github-release', 'package-build-meta'].includes(id)) return 'release';
   if (['build-command', 'capacitor-sync'].includes(id)) return 'workflows';

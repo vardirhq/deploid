@@ -316,15 +316,13 @@ async function updateAndroidConfig(cwd: string, config: any, logger: any): Promi
       }
     }
     
-    // Update Java version to 17 for compatibility in all build.gradle files
+    // Ensure Android build defaults without pinning a machine-specific JDK path.
     const androidDir = path.join(cwd, 'android');
     if (fs.existsSync(androidDir)) {
-      // Create gradle.properties to set Java version and AndroidX globally
+      // Create gradle.properties with AndroidX and Gradle performance defaults.
+      // JAVA_HOME is intentionally not pinned here; build commands resolve it from the environment/PATH.
       const gradlePropertiesPath = path.join(androidDir, 'gradle.properties');
-      const gradleProperties = `# Java version configuration
-org.gradle.java.home=/usr/lib/jvm/java-21-openjdk
-
-# AndroidX configuration
+      const gradleProperties = `# AndroidX configuration
 android.useAndroidX=true
 android.enableJetifier=true
 
@@ -336,7 +334,7 @@ org.gradle.daemon=true
 org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8
 `;
       writeFileIfChanged(gradlePropertiesPath, gradleProperties);
-      logger.debug('Ensured gradle.properties with Java 21 and AndroidX configuration');
+      logger.debug('Ensured gradle.properties with AndroidX configuration');
       
       // Create network security configuration for HTTPS/HTTP requests
       const networkSecurityConfigPath = path.join(androidDir, 'app/src/main/res/xml/network_security_config.xml');
