@@ -26,7 +26,8 @@ brew install openjdk@21
 3. Set environment variables:
 ```bash
 export ANDROID_HOME=~/Android/Sdk
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+# Optional if java is already on PATH
+export JAVA_HOME="$(dirname $(dirname $(readlink -f $(which java))))"
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 ```
 

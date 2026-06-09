@@ -54,11 +54,12 @@ deploid debug
 
 **Solution**:
 ```bash
-# Ensure Java 21 is installed
+# Ensure Java 17+ is installed
 sudo pacman -S jdk21-openjdk
 
 # Set environment variables
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+# Optional if java is already on PATH
+export JAVA_HOME="$(dirname $(dirname $(readlink -f $(which java))))"
 export ANDROID_HOME=~/Android/Sdk
 
 # Clean and rebuild
@@ -70,7 +71,7 @@ cd android
 **Gradle Configuration** (auto-applied by Deploid):
 ```properties
 # gradle.properties
-org.gradle.java.home=/usr/lib/jvm/java-21-openjdk
+# Deploid does not pin org.gradle.java.home; it uses JAVA_HOME or java on PATH
 org.gradle.parallel=true
 org.gradle.caching=true
 org.gradle.daemon=true
@@ -122,14 +123,15 @@ npm run dev
 ## 🛠️ Environment Setup
 
 ### Required Software:
-- **Java 21** (OpenJDK) - `sudo pacman -S jdk21-openjdk`
+- **Java 17+** (JDK) - `sudo pacman -S jdk21-openjdk`
 - **Android SDK** (API 34) - Install via Android Studio
 - **Gradle 8.13** - Auto-managed by Deploid
 - **Node.js 18+** - For web development
 
 ### Environment Variables:
 ```bash
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+# Optional if java is already on PATH
+export JAVA_HOME="$(dirname $(dirname $(readlink -f $(which java))))"
 export ANDROID_HOME=~/Android/Sdk
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 ```

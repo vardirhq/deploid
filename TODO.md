@@ -48,6 +48,7 @@
 - [x] Add `@deploid/plugin-packaging-electron` and wire CLI/plugin manager support for desktop app scaffolding.
 - [x] Expand `deploid init` to collect app metadata and propagate to `deploid.config.ts`, `capacitor.config.json`, and `package.json`.
 - [x] Normalize artifact command aliases so `deploid artifacts --list|--inspect|--clean` matches other CLI command styles.
+- [x] Remove hardcoded Android Java paths and improve Java/SDK preflight diagnostics.
 
 ## Release Workflow Foundations
 - [x] Add `deploid doctor` to audit project readiness, required tooling, and common Android setup gaps.

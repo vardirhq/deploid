@@ -199,20 +199,21 @@ export const NetworkDebug = () => {
 ## Environment Setup
 
 ### Required Software:
-- Java 21 (OpenJDK)
+- Java 17+ (JDK; JAVA_HOME can be inferred from PATH)
 - Android SDK (API 34)
 - Gradle 8.13
 - Node.js 18+
 
 ### Environment Variables:
 \`\`\`bash
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk
+# Optional if java is already on PATH
+export JAVA_HOME="$(dirname $(dirname $(readlink -f $(which java))))"
 export ANDROID_HOME=~/Android/Sdk
 \`\`\`
 
 ### Gradle Configuration:
 \`\`\`properties
-org.gradle.java.home=/usr/lib/jvm/java-21-openjdk
+# Prefer JAVA_HOME or java on PATH instead of pinning org.gradle.java.home
 org.gradle.parallel=true
 org.gradle.caching=true
 org.gradle.daemon=true
