@@ -39,7 +39,6 @@ const runBuildAndroid: PipelineStep = async ({ logger, config, cwd, debug }: any
       logger.debug(`Working Directory: ${androidPath}`);
     }
     
-    // Use direct Gradle command for better control (ChatGPT recommendation)
     if (debug) {
       logger.debugCommand('./gradlew', ['assembleDebug'], androidPath);
     }

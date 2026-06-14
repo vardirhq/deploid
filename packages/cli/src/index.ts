@@ -408,7 +408,8 @@ program
   .option('--filter <tag>', 'Explicit logcat tag/filter to stream')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
-    const config = await loadConfig();
+    const { loadConfigOptional } = await import('@deploid/core');
+    const config = await loadConfigOptional(process.cwd());
     const { execa } = await import('execa');
     try {
       const prefix = options.device ? ['-s', options.device] : [];
@@ -416,10 +417,10 @@ program
       await execa('adb', [...prefix, 'logcat', '-c']);
       console.log(filter
         ? `Showing device logs with filter "${filter}"...`
-        : `Showing device logs (filter manually for "${config.appName}")...`);
+        : `Showing all device logs (use --filter <tag> or --app-only to narrow output)...`);
       await execa('adb', [...prefix, 'logcat', ...(filter ? [`${filter}:V`, '*:S'] : [])], { stdio: 'inherit' });
     } catch (error) {
-      console.error('❌ Failed to view logs:', error);
+      console.error('❌ Failed to view logs. Make sure a device is connected and adb is in PATH.');
     }
   });
 
@@ -427,14 +428,21 @@ program
   .command('uninstall')
   .description('Uninstall app from connected devices')
   .option('-d, --device <id>', 'Uninstall from a specific device/emulator')
+  .option('--app-id <id>', 'Override the app ID to uninstall (bypasses config lookup)')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
-    const config = await loadConfig();
+    const { loadConfigOptional } = await import('@deploid/core');
+    const config = await loadConfigOptional(process.cwd());
+    const appId = options.appId || config.appId;
+    if (!appId || appId === 'dev.deploid.placeholder') {
+      console.error('❌ Could not determine app ID. Run from a Deploid project directory or pass --app-id <id>.');
+      process.exit(1);
+    }
     const { execa } = await import('execa');
     try {
       const prefix = options.device ? ['-s', options.device] : [];
-      await execa('adb', [...prefix, 'uninstall', config.appId], { stdio: 'inherit' });
-      console.log(`✅ Uninstalled ${config.appName}${options.device ? ` from ${options.device}` : ' from device'}`);
+      await execa('adb', [...prefix, 'uninstall', appId], { stdio: 'inherit' });
+      console.log(`✅ Uninstalled ${config.appName ?? appId}${options.device ? ` from ${options.device}` : ''}`);
     } catch (error) {
       console.error('❌ Failed to uninstall:', error);
     }

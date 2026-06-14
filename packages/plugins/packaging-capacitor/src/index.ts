@@ -328,7 +328,7 @@ async function updateAndroidConfig(cwd: string, config: any, logger: any): Promi
 android.useAndroidX=true
 android.enableJetifier=true
 
-# Gradle performance optimizations (ChatGPT recommendations)
+# Gradle performance optimizations
 org.gradle.parallel=true
 org.gradle.configureondemand=true
 org.gradle.caching=true
