@@ -39,7 +39,6 @@ const runBuildAndroid: PipelineStep = async ({ logger, config, cwd, debug }: any
       logger.debug(`Working Directory: ${androidPath}`);
     }
     
-    // Use direct Gradle command for better control (ChatGPT recommendation)
     if (debug) {
       logger.debugCommand('./gradlew', ['assembleDebug'], androidPath);
     }
@@ -135,7 +134,10 @@ async function resolveJavaHome(logger: any): Promise<string | undefined> {
 
   const javaPath = await findCommand('java');
   if (!javaPath) {
-    throw new Error('Java was not found. Install JDK 17+ or set JAVA_HOME to a valid JDK before running `deploid build`.');
+    throw new Error(
+      'Java was not found. Install JDK 21+ and add it to PATH, or set JAVA_HOME.\n' +
+      '  Download: https://adoptium.net/'
+    );
   }
 
   const realJavaPath = fs.realpathSync(javaPath);

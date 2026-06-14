@@ -1,196 +1,215 @@
 # Deploid
 
-**From build to Android package — one command.**
+**Ship your web app to Android. Without the Android expertise.**
 
-Deploid automates the entire process of turning a web app into a ready-to-ship Android package.
-
-## 🚀 Quick Start
+Deploid is a CLI that takes any Vite, Next.js, or React app and turns it into a signed, published Android package — handling icons, Capacitor, Gradle, versioning, signing, changelogs, and Play Store uploads so you don't have to.
 
 ```bash
-# Install globally
 npm install -g @deploid/cli
+cd my-web-app
+deploid init        # auto-detects your framework, installs deps
+deploid package     # builds web app + wraps in Capacitor + generates icons
+deploid build       # compiles APK
+deploid deploy --launch   # installs on your phone
+```
 
-# Initialize a project
-deploid init
+That's the whole thing. No Android Studio required for the happy path. No manually generating icons at six densities. No wrestling with `build.gradle`.
 
-# Add your logo
-cp your-logo.svg assets/logo.svg
+---
 
-# Generate all required assets
-deploid assets
+## What it actually does
 
-# Audit local project, release, and tooling readiness
-deploid doctor
+When you run those four commands, here's what happens under the hood:
 
-# Scaffold release signing and publish placeholders
+**`deploid init`**
+- Detects your framework (Vite / Next.js / CRA) from `package.json`
+- Generates a typed `deploid.config.ts` with sensible defaults
+- Installs `@capacitor/cli`, `@capacitor/core`, `@capacitor/android`
+- Adds `android:build`, `android:deploy`, `android:ship` scripts to your `package.json`
+- No Firebase prompts, no one-by-one plugin interrogation — just setup
+
+**`deploid package`**
+- Runs your web build command
+- Auto-generates app icons at all Android densities + PWA sizes from your logo SVG
+- Syncs assets into Capacitor
+- Configures `AndroidManifest.xml`, `build.gradle`, `strings.xml` from your config
+- Adds the Android platform if it doesn't exist yet
+
+**`deploid build`**
+- Validates your toolchain before starting (Java 21+, `ANDROID_HOME`) — fails fast with a clear message instead of a cryptic Gradle error 3 minutes in
+- Builds a debug APK
+- Builds a signed release AAB if signing is configured
+
+**`deploid deploy`**
+- Finds connected devices automatically
+- Installs the APK
+- Optionally launches the app and tails logcat
+
+---
+
+## The release workflow
+
+Getting to the Play Store is usually where things fall apart. Deploid handles the whole chain:
+
+```bash
+# One-time signing setup
 deploid release init --yes
+# → creates secrets/ directory
+# → adds signing config to deploid.config.ts
+# → writes .env.deploid.example with required env vars
+# → adds secrets to .gitignore
 
-# Package for Android
-deploid package
+# Set your passwords (from CI secrets or locally)
+export DEPLOID_ANDROID_STORE_PASSWORD="..."
+export DEPLOID_ANDROID_KEY_PASSWORD="..."
 
-# Build APK/AAB
-deploid build
+# Ship it
+deploid ship --patch --from-git
+# → bumps version in package.json AND build.gradle simultaneously
+# → builds signed AAB
+# → generates CHANGELOG.md from git history
+# → publishes to GitHub Releases and/or Play Store
+```
 
-# Deploy to connected device
-deploid deploy
+---
 
-# Setup Firebase for push notifications
-deploid firebase
+## CI/CD
 
-# Publish the latest artifact
-deploid publish --dry-run
-
-# Bump semver + Android version metadata
-deploid version --patch
-
-# Turn release notes into CHANGELOG.md entries
-deploid changelog --from-git
-
-# Run the full release workflow
-deploid ship --patch --from-git --dry-run
-
-# Inspect generated outputs
-deploid artifacts list
-deploid artifacts --list
-
-# Scaffold a custom plugin
-deploid plugin init hello-world
-
-# Run the local API daemon for external apps
-deploid daemon
-
-# Generate GitHub Actions release workflow
+```bash
 deploid ci init github
 ```
 
-## ✨ Features
+Generates a complete `.github/workflows/deploid-release.yml` — including secrets reference, Java setup, Node setup, and publish steps.
 
-- **🖼️ Asset Generation**: Automatic icon generation for all Android densities and PWA
-- **📦 Packaging**: Capacitor-based Android packaging
-- **🔨 Build System**: APK/AAB generation with signing
-- **🚦 Release Setup**: Signing, env, and publish scaffolding with `deploid release init`
-- **☁️ Publishing**: GitHub Releases and Play Console uploads
-- **🏷️ Versioning**: Sync semver, Android versionCode/name, and release notes scaffolding
-- **📝 Changelog**: Generate `CHANGELOG.md` entries from release notes and git history
-- **🚢 Workflow Orchestration**: Run doctor, version, build, changelog, and publish as one flow
-- **📦 Artifact Management**: List, inspect, and clean generated Android, desktop, and asset outputs
-- **🧱 Plugin Authoring**: Scaffold and validate custom Deploid plugins
-- **🔌 Local API Daemon**: Optional loopback HTTP mode for external apps and dashboards
-- **⚙️ CI/CD**: Generate GitHub Actions release workflows and secret guides
-- **🔧 Plugin Architecture**: Extensible and modular design
-- **🔥 Firebase Integration**: Automated push notification setup
-- **📱 Native Deployment**: Direct APK installation to devices
-- **🍎 iOS Preparation**: Generate Xcode projects for Mac handoff
-
-## 🎯 Supported Frameworks
-
-- **Vite** (React, Vue, Svelte)
-- **Next.js** (Static export)
-- **Create React App**
-- **Static HTML** projects
-
-## 📦 Supported Packaging Engines
-
-- **Capacitor** - Native WebView wrapper
-
-## 🧩 Commands
-
-| Command              | Description                                 |
-| -------------------- | ------------------------------------------- |
-| `deploid init`    | Setup config and base folders               |
-| `deploid doctor`  | Audit workflow, release, plugin, and toolchain readiness |
-| `deploid release init` | Scaffold signing, env templates, and publish placeholders |
-| `deploid version` | Sync semver, Android version metadata, and release notes scaffolding |
-| `deploid changelog` | Turn release notes into `CHANGELOG.md` entries |
-| `deploid ship` | Run the end-to-end Android release workflow |
-| `deploid artifacts` | List, inspect, and clean generated outputs |
-| `deploid plugin init` | Scaffold a custom plugin package |
-| `deploid daemon` | Run the local Deploid HTTP daemon |
-| `deploid ci init github` | Generate GitHub Actions release workflow scaffolding |
-| `deploid assets`  | Generate all required icons and screenshots |
-| `deploid package` | Wrap app for Android (Capacitor)             |
-| `deploid build`   | Build APK/AAB (debug/release)               |
-| `deploid publish` | Upload APK/AAB to GitHub Releases or Play Console |
-
-## 📚 Documentation
-
-- [Getting Started](docs/getting-started.md)
-- [App API](docs/api.md)
-- [Configuration](docs/configuration.md)
-- [CLI Reference](docs/cli-reference.md)
-- [Examples](docs/examples.md)
-- [Contributing](docs/contributing.md)
-- [Migration 2.0](docs/MIGRATION_2_0.md)
-- [Deprecation Plan](docs/DEPRECATION_PLAN.md)
-
-<<<<<<< Updated upstream
-=======
-## 🖥️ Desktop GUI
-
-Deploid Studio is an experimental desktop client layered on top of the CLI/core workflow engine.
+For scripted / headless init:
 
 ```bash
-npm install -g @deploid/studio
-deploid-studio
+deploid init --yes --app-name "MyApp" --app-id "com.example.myapp"
 ```
 
-## 🔌 App Integration
+---
 
-The long-term product direction is CLI/core first, with optional clients layered on top.
+## Diagnostics
 
-External apps can integrate through `@deploid/core` or the optional local daemon instead of shelling out blindly:
+Not sure why something is broken? Run:
+
+```bash
+deploid doctor
+```
+
+Checks your entire environment — Java version, Android SDK location, Capacitor installation, signing config, Gradle wrapper, SDK licenses — and tells you exactly what's wrong and how to fix it. Run it before filing an issue.
+
+```
+Deploid Doctor
+Project: /home/chris/my-web-app
+Status: ACTION NEEDED (8 passed, 1 warning, 1 failure)
+
+Workflow readiness:
+  PASS Project setup           100%
+  PASS Android build           100%
+  WARN Release readiness        60%
+  PASS Device deploy           100%
+
+Release:
+  WARN Android signing         No signing config found. Run: deploid release init
+```
+
+---
+
+## Supported frameworks
+
+| Framework | Detection | Build output |
+|---|---|---|
+| **Vite** (React, Vue, Svelte) | Auto | `dist/` |
+| **Next.js** (static export) | Auto | `out/` |
+| **Create React App** | Auto | `build/` |
+| **Static HTML** | `--framework static` | `public/` |
+
+Framework detection reads your `package.json` dependencies — no `--framework` flag needed for standard setups.
+
+---
+
+## Requirements
+
+- **Node.js 18+**
+- **Java 21+** — [download](https://adoptium.net/)
+- **Android SDK** with `ANDROID_HOME` set — install via [Android Studio](https://developer.android.com/studio) or command-line tools
+
+Not sure if you have everything? `deploid doctor` will tell you.
+
+---
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `deploid init` | Set up config, install Capacitor deps, scaffold package.json scripts |
+| `deploid doctor` | Full environment and release readiness audit |
+| `deploid assets` | Generate icons from your logo (runs automatically inside `package`) |
+| `deploid package` | Build web app → sync Capacitor → configure Android project |
+| `deploid build` | Compile APK (debug) and AAB (release, if signing configured) |
+| `deploid deploy` | Install APK on connected device; `--launch` to open, `--logs` to tail |
+| `deploid devices` | List connected Android devices and emulators |
+| `deploid version` | Bump semver + sync Android `versionCode`/`versionName` |
+| `deploid changelog` | Generate `CHANGELOG.md` from release notes and git history |
+| `deploid ship` | Full release run: version → build → changelog → publish |
+| `deploid publish` | Upload APK/AAB to GitHub Releases or Play Console |
+| `deploid release init` | Scaffold signing config, `.env` template, secrets directory |
+| `deploid firebase` | Wire up Firebase push notifications |
+| `deploid ci init github` | Generate GitHub Actions release workflow |
+| `deploid artifacts` | List, inspect, or clean generated outputs |
+| `deploid plugin init` | Scaffold a custom plugin |
+| `deploid daemon` | Local HTTP daemon for integrating external tools |
+
+---
+
+## Programmatic API
+
+Use `@deploid/core` to drive Deploid from your own tooling instead of shelling out:
 
 ```ts
-import { inspectArtifacts, runDoctorCommand, runPluginCommand } from '@deploid/core';
+import { runDoctorCommand, runPluginCommand, inspectArtifacts } from '@deploid/core';
 
+// Run a full doctor check
 await runDoctorCommand({
   cwd: '/path/to/project',
   doctorOptions: { json: true, summary: true }
 });
 
-await runPluginCommand('build-android', {
-  cwd: '/path/to/project',
-  debug: true
-});
+// Trigger a build
+await runPluginCommand('build-android', { cwd: '/path/to/project' });
 
+// Inspect what was built
 const artifacts = inspectArtifacts('/path/to/project');
 ```
 
->>>>>>> Stashed changes
-## 🎯 Current Status
-
-✅ **Milestone 1 — Core CLI + Capacitor** (Complete)
-- [x] Config loader + basic CLI
-- [x] Assets (icons) generation with Sharp
-- [x] Capacitor packaging
-- [x] Debug APK build system
-
-🔄 **Next: Milestone 2 — Release + CI**
-- [x] Signing + release scaffolding
-- [x] Play/GitHub publishing
-- [x] Version orchestration
-- [x] Auto GitHub Actions generator
-- [x] Stable app-facing core API for external clients
-
-## 🧠 Vision
-
-> "Turn any web app into a publishable Android app with one command — including icons, signing, builds, and release automation."
-
-The long-term goal: Expand to **multi-platform** (Windows .exe, macOS DMG, iOS IPA, and Web Deploy).
-
-## 📄 License
-
-MIT © [MadsenDev](https://github.com/MadsenDev)
-
-## 🤝 Contributing
-
-Contributions are welcome! Please see our [Contributing Guide](docs/contributing.md) for details.
-
-## 📞 Support
-
-- **GitHub Issues**: [Report bugs and request features](https://github.com/MadsenDev/deploid/issues)
-- **GitHub Discussions**: [Ask questions and discuss](https://github.com/MadsenDev/deploid/discussions)
+Or run `deploid daemon` for a language-agnostic local HTTP interface.
 
 ---
 
-**Made with ❤️ by [MadsenDev](https://github.com/MadsenDev)**
+## Plugin system
+
+Deploid is built on a plugin pipeline. Every capability — assets, packaging, build, deploy, publish — is a plugin. You can write your own:
+
+```bash
+deploid plugin init my-custom-step
+```
+
+See [Plugin Development](docs/plugins.md) for the contract.
+
+---
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md)
+- [Configuration Reference](docs/configuration.md)
+- [CLI Reference](docs/cli-reference.md)
+- [Android Troubleshooting](docs/ANDROID_TROUBLESHOOTING.md)
+- [Plugin Development](docs/plugins.md)
+- [Programmatic API](docs/api.md)
+- [Examples](docs/examples.md)
+- [Contributing](docs/contributing.md)
+
+---
+
+MIT © [MadsenDev](https://github.com/MadsenDev)

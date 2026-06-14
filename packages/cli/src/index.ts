@@ -5,6 +5,31 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+async function checkAndroidToolchain(): Promise<void> {
+  const { execa } = await import('execa');
+  const problems: string[] = [];
+
+  try {
+    await execa('java', ['-version'], { stdio: 'pipe' });
+  } catch {
+    problems.push('Java not found. Install JDK 21+: https://adoptium.net/');
+  }
+
+  if (!process.env.ANDROID_HOME && !process.env.ANDROID_SDK_ROOT) {
+    problems.push(
+      'ANDROID_HOME is not set. Install Android Studio or the Android command-line tools,\n' +
+      '  then set: export ANDROID_HOME="$HOME/Android/Sdk"'
+    );
+  }
+
+  if (problems.length > 0) {
+    console.error('❌ Missing Android toolchain requirements:\n');
+    for (const problem of problems) console.error(`  • ${problem}`);
+    console.error('\n  Run `deploid doctor` for a full environment check.');
+    process.exit(1);
+  }
+}
+
 // Get version from package.json
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,7 +44,7 @@ program
 program
   .command('init')
   .description('Setup config and base folders')
-  .option('-f, --framework <framework>', 'Web framework (vite|next|cra|static)', 'vite')
+  .option('-f, --framework <framework>', 'Web framework — auto-detected if omitted (vite|next|cra|static)')
   .option('-p, --packaging <engine>', 'Android packaging engine (capacitor|tauri|twa)', 'capacitor')
   .option('--app-name <name>', 'App display name')
   .option('--app-id <id>', 'App ID / package ID (reverse-domain)')
@@ -27,6 +52,8 @@ program
   .option('--author-name <name>', 'Author name')
   .option('--author-email <email>', 'Author email')
   .option('--assets-source <path>', 'Asset source path to store in config')
+  .option('--firebase', 'Set up Firebase push notifications during init')
+  .option('-y, --yes', 'Accept all defaults without prompting (CI-friendly)')
   .option('--force', 'Overwrite existing deploid.config.ts')
   .option('--all-plugins', 'Install all available plugins without prompts')
   .option('--debug', 'Enable debug logging')
@@ -137,12 +164,31 @@ program
   .description('Wrap app for Android (Capacitor/Tauri/TWA)')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
+    await checkAndroidToolchain();
     const config = await loadConfig();
     if (config.android.packaging !== 'capacitor') {
       throw new Error(`Packaging engine "${config.android.packaging}" is not supported in Deploid 2.0. Use "capacitor".`);
     }
+
+    // Auto-run assets generation if assets-gen/ is missing or empty
+    const { existsSync, readdirSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const cwd = process.cwd();
+    const assetsGenDir = join(cwd, config.assets?.output ?? 'assets-gen');
+    const assetsAreMissing = !existsSync(assetsGenDir) || readdirSync(assetsGenDir).length === 0;
+    if (assetsAreMissing) {
+      const logoPath = join(cwd, config.assets?.source ?? 'assets/logo.svg');
+      if (existsSync(logoPath)) {
+        console.log('  Assets not generated yet — running `deploid assets` first...');
+        await runPluginCommand('assets', { cwd, config, debug: options.debug });
+      } else {
+        console.log(`⚠️  No assets found and no logo at ${config.assets?.source ?? 'assets/logo.svg'}. Skipping asset generation.`);
+        console.log('    Add a logo then run: deploid assets');
+      }
+    }
+
     await runPluginCommand(`packaging-${config.android.packaging}`, {
-      cwd: process.cwd(),
+      cwd,
       config,
       debug: options.debug
     });
@@ -166,9 +212,22 @@ program
   .description('Build APK/AAB')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
+    await checkAndroidToolchain();
     const config = await loadConfig();
+    const cwd = process.cwd();
+
+    // Warn if web assets haven't been synced into the Android project yet
+    const { existsSync, readdirSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const syncedWebDir = join(cwd, 'android', 'app', 'src', 'main', 'assets', 'public');
+    if (!existsSync(syncedWebDir) || readdirSync(syncedWebDir).length === 0) {
+      console.error('❌ Web assets have not been synced into the Android project.');
+      console.error('  Run `deploid package` first, then re-run `deploid build`.');
+      process.exit(1);
+    }
+
     await runPluginCommand('build-android', {
-      cwd: process.cwd(),
+      cwd,
       config,
       debug: options.debug
     });
@@ -336,7 +395,8 @@ program
       console.log(stdout);
     } catch (error) {
       console.error('❌ ADB not found. Please install Android SDK Platform Tools.');
-      console.log('Install: sudo pacman -S android-tools');
+      console.error('  Download: https://developer.android.com/tools/releases/platform-tools');
+      console.error('  Then add the tools directory to your PATH and set ANDROID_HOME.');
     }
   });
 
@@ -348,7 +408,8 @@ program
   .option('--filter <tag>', 'Explicit logcat tag/filter to stream')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
-    const config = await loadConfig();
+    const { loadConfigOptional } = await import('@deploid/core');
+    const config = await loadConfigOptional(process.cwd());
     const { execa } = await import('execa');
     try {
       const prefix = options.device ? ['-s', options.device] : [];
@@ -356,10 +417,10 @@ program
       await execa('adb', [...prefix, 'logcat', '-c']);
       console.log(filter
         ? `Showing device logs with filter "${filter}"...`
-        : `Showing device logs (filter manually for "${config.appName}")...`);
+        : `Showing all device logs (use --filter <tag> or --app-only to narrow output)...`);
       await execa('adb', [...prefix, 'logcat', ...(filter ? [`${filter}:V`, '*:S'] : [])], { stdio: 'inherit' });
     } catch (error) {
-      console.error('❌ Failed to view logs:', error);
+      console.error('❌ Failed to view logs. Make sure a device is connected and adb is in PATH.');
     }
   });
 
@@ -367,14 +428,21 @@ program
   .command('uninstall')
   .description('Uninstall app from connected devices')
   .option('-d, --device <id>', 'Uninstall from a specific device/emulator')
+  .option('--app-id <id>', 'Override the app ID to uninstall (bypasses config lookup)')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
-    const config = await loadConfig();
+    const { loadConfigOptional } = await import('@deploid/core');
+    const config = await loadConfigOptional(process.cwd());
+    const appId = options.appId || config.appId;
+    if (!appId || appId === 'dev.deploid.placeholder') {
+      console.error('❌ Could not determine app ID. Run from a Deploid project directory or pass --app-id <id>.');
+      process.exit(1);
+    }
     const { execa } = await import('execa');
     try {
       const prefix = options.device ? ['-s', options.device] : [];
-      await execa('adb', [...prefix, 'uninstall', config.appId], { stdio: 'inherit' });
-      console.log(`✅ Uninstalled ${config.appName}${options.device ? ` from ${options.device}` : ' from device'}`);
+      await execa('adb', [...prefix, 'uninstall', appId], { stdio: 'inherit' });
+      console.log(`✅ Uninstalled ${config.appName ?? appId}${options.device ? ` from ${options.device}` : ''}`);
     } catch (error) {
       console.error('❌ Failed to uninstall:', error);
     }
