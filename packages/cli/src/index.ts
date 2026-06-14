@@ -53,6 +53,7 @@ program
   .option('--author-email <email>', 'Author email')
   .option('--assets-source <path>', 'Asset source path to store in config')
   .option('--firebase', 'Set up Firebase push notifications during init')
+  .option('-y, --yes', 'Accept all defaults without prompting (CI-friendly)')
   .option('--force', 'Overwrite existing deploid.config.ts')
   .option('--all-plugins', 'Install all available plugins without prompts')
   .option('--debug', 'Enable debug logging')
@@ -168,8 +169,26 @@ program
     if (config.android.packaging !== 'capacitor') {
       throw new Error(`Packaging engine "${config.android.packaging}" is not supported in Deploid 2.0. Use "capacitor".`);
     }
+
+    // Auto-run assets generation if assets-gen/ is missing or empty
+    const { existsSync, readdirSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const cwd = process.cwd();
+    const assetsGenDir = join(cwd, config.assets?.output ?? 'assets-gen');
+    const assetsAreMissing = !existsSync(assetsGenDir) || readdirSync(assetsGenDir).length === 0;
+    if (assetsAreMissing) {
+      const logoPath = join(cwd, config.assets?.source ?? 'assets/logo.svg');
+      if (existsSync(logoPath)) {
+        console.log('  Assets not generated yet — running `deploid assets` first...');
+        await runPluginCommand('assets', { cwd, config, debug: options.debug });
+      } else {
+        console.log(`⚠️  No assets found and no logo at ${config.assets?.source ?? 'assets/logo.svg'}. Skipping asset generation.`);
+        console.log('    Add a logo then run: deploid assets');
+      }
+    }
+
     await runPluginCommand(`packaging-${config.android.packaging}`, {
-      cwd: process.cwd(),
+      cwd,
       config,
       debug: options.debug
     });

@@ -27,12 +27,11 @@ const runPackagingCapacitor: PipelineStep = async ({ logger, config, cwd }: any)
     
     // Copy generated icons to Android project
     await copyAndroidIcons(cwd, config, logger);
-    
-    // Add deployment scripts to package.json
-    await addDeploymentScripts(cwd, config, logger);
-    
-    // Add push notifications plugin
-    await addPushNotificationsPlugin(cwd, logger);
+
+    // Only install push-notifications if Firebase is explicitly configured
+    if (config.firebase?.enabled) {
+      await addPushNotificationsPlugin(cwd, logger);
+    }
     
     logger.info('✅ Capacitor packaging complete');
   } catch (error) {
@@ -43,7 +42,7 @@ const runPackagingCapacitor: PipelineStep = async ({ logger, config, cwd }: any)
 
 const plugin = {
   name: 'packaging-capacitor',
-  requirements: ['npm', 'npx'],
+  requirements: ['npx'],
   plan: () => ['Initialize Capacitor', 'Sync web build', 'Add Android platform', 'Apply Android configuration'],
   validate: async ({ cwd }: any) => {
     await assertCommand('npm', ['--version']);
@@ -62,7 +61,10 @@ async function assertCommand(command: string, args: string[]): Promise<void> {
   try {
     await execa(command, args, { stdio: 'pipe' });
   } catch {
-    throw new Error(`Required command not found: ${command}`);
+    throw new Error(
+      `Required command not found: ${command}. ` +
+      (command === 'npx' ? 'Make sure Node.js is installed and in PATH.' : '')
+    );
   }
 }
 

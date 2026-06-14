@@ -13,6 +13,7 @@ export interface InitOptions {
   firebaseProjectId?: string;
   firebaseApiKey?: string;
   allPlugins?: boolean;
+  yes?: boolean;
   force?: boolean;
   appName?: string;
   appId?: string;
@@ -403,6 +404,7 @@ async function collectAppMetadata(cwd: string, options: InitOptions): Promise<Ap
   };
 
   const shouldPrompt =
+    !options.yes &&
     !options.appName &&
     !options.appId &&
     !options.description &&
@@ -751,6 +753,8 @@ async function installPluginDependencies(cwd: string, options: InitOptions, pack
     if (options.allPlugins) {
       selectedExtras = extraPlugins.map((p) => p.package);
       console.log('✅ All optional plugins selected (--all-plugins)');
+    } else if (options.yes) {
+      console.log('  Skipping optional plugins (--yes mode). Add later with: deploid plugin --install <name>');
     } else {
       // Ask once with a concise list instead of prompting one-by-one
       const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
