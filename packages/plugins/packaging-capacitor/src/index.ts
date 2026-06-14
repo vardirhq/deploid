@@ -754,6 +754,13 @@ async function copyAndroidIcons(cwd: string, config: any, logger: any): Promise<
   }
 }
 
+function detectPkgManager(cwd: string): { cmd: string; args: string[] } {
+  if (fs.existsSync(path.join(cwd, 'pnpm-lock.yaml'))) return { cmd: 'pnpm', args: ['add'] };
+  if (fs.existsSync(path.join(cwd, 'yarn.lock'))) return { cmd: 'yarn', args: ['add'] };
+  if (fs.existsSync(path.join(cwd, 'bun.lockb')) || fs.existsSync(path.join(cwd, 'bun.lock'))) return { cmd: 'bun', args: ['add'] };
+  return { cmd: 'npm', args: ['install'] };
+}
+
 async function addPushNotificationsPlugin(cwd: string, logger: any): Promise<void> {
   const packageJsonPath = path.join(cwd, 'package.json');
   if (!fs.existsSync(packageJsonPath)) return;
@@ -769,19 +776,13 @@ async function addPushNotificationsPlugin(cwd: string, logger: any): Promise<voi
   }
 
   logger.info('Adding push notifications plugin...');
-  
+  const pkg = detectPkgManager(cwd);
   try {
-    // Install the push notifications plugin
-    await execa('npm', ['install', '@capacitor/push-notifications'], { cwd, stdio: 'inherit' });
-    logger.debug('Installed @capacitor/push-notifications');
-    
-    // Capacitor will automatically detect and register the plugin
-    logger.debug('Capacitor will auto-register the plugin on next sync');
-    
+    await execa(pkg.cmd, [...pkg.args, '@capacitor/push-notifications'], { cwd, stdio: 'inherit' });
     logger.info('✅ Push notifications plugin added');
   } catch (error) {
     logger.warn(`Failed to add push notifications plugin: ${error}`);
-    logger.info('You can manually add it later with: npm install @capacitor/push-notifications');
+    logger.info(`Add it manually: ${pkg.cmd} ${pkg.args.join(' ')} @capacitor/push-notifications`);
   }
 }
 

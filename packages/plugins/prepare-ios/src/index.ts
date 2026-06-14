@@ -37,37 +37,46 @@ const prepareIos = (): PipelineStep => async ({ logger, config, cwd }: any) => {
   }
 };
 
+function detectPkgManager(cwd: string): { cmd: string; args: string[] } {
+  if (fs.existsSync(path.join(cwd, 'pnpm-lock.yaml'))) return { cmd: 'pnpm', args: ['add'] };
+  if (fs.existsSync(path.join(cwd, 'yarn.lock'))) return { cmd: 'yarn', args: ['add'] };
+  if (fs.existsSync(path.join(cwd, 'bun.lockb')) || fs.existsSync(path.join(cwd, 'bun.lock'))) return { cmd: 'bun', args: ['add'] };
+  return { cmd: 'npm', args: ['install'] };
+}
+
 async function checkCapacitorInstalled(logger: any): Promise<void> {
   try {
     await execa('npx', ['@capacitor/cli', '--version'], { stdio: 'pipe' });
     logger.debug('Capacitor CLI found');
-  } catch (error) {
-    logger.warn('Capacitor CLI not found, installing...');
-    await execa('npm', ['install', '-g', '@capacitor/cli'], { stdio: 'inherit' });
+  } catch {
+    throw new Error(
+      'Capacitor CLI not found. Install it in your project:\n' +
+      '  npm install @capacitor/cli @capacitor/core\n' +
+      'or run `deploid init` to set everything up.'
+    );
   }
 }
 
 async function addIosPlatform(cwd: string, logger: any): Promise<void> {
   const iosPath = path.join(cwd, 'ios');
-  
+
   if (!fs.existsSync(iosPath)) {
     logger.info('Installing iOS platform...');
-    
-    // First install the iOS platform package
+    const pkg = detectPkgManager(cwd);
+
     try {
-      await execa('npm', ['install', '@capacitor/ios'], { cwd, stdio: 'inherit' });
+      await execa(pkg.cmd, [...pkg.args, '@capacitor/ios'], { cwd, stdio: 'inherit' });
       logger.debug('Installed @capacitor/ios package');
     } catch (error) {
       logger.warn('Failed to install @capacitor/ios package, continuing...');
     }
-    
-    // Then add the iOS platform
+
     try {
       await execa('npx', ['@capacitor/cli', 'add', 'ios'], { cwd, stdio: 'inherit' });
       logger.info('✅ iOS platform added');
     } catch (error) {
-      logger.error('Failed to add iOS platform. You may need to install @capacitor/ios first:');
-      logger.info('  npm install @capacitor/ios');
+      logger.error('Failed to add iOS platform. Try manually:');
+      logger.info(`  ${pkg.cmd} ${pkg.args.join(' ')} @capacitor/ios`);
       logger.info('  npx cap add ios');
       throw error;
     }
