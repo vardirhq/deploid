@@ -449,8 +449,7 @@ function applyFixes(state: ProjectState, checks: CheckResult[]): FixResult[] {
     const nextConfig = {
       appId: state.config.appId || 'com.example.myapp',
       appName: state.config.appName || 'MyApp',
-      webDir,
-      bundledWebRuntime: false
+      webDir
     };
     const hadConfig = fs.existsSync(state.capacitorConfigPath);
     fs.writeFileSync(state.capacitorConfigPath, `${JSON.stringify(nextConfig, null, 2)}\n`);
@@ -572,17 +571,26 @@ function printSummary(summary: DoctorSummary, options: DoctorOptions): void {
   const showPasses = options.verbose && !options.summary;
   const showDetails = !options.summary;
 
+  const noConfig = summary.checks.some((c) => c.id === 'deploid-config' && c.status === 'fail');
+
   console.log('Deploid Doctor');
   console.log(`Project: ${summary.cwd}`);
   console.log(
     `Status: ${summary.ok ? 'OK' : 'ACTION NEEDED'} (${summary.totals.pass} passed, ${summary.totals.warn} warnings, ${summary.totals.fail} failures)`
   );
 
+  if (noConfig) {
+    console.log('');
+    console.log('  No Deploid config found in this directory.');
+    console.log('  Get started: deploid init');
+    console.log('  Then re-run: deploid doctor');
+  }
+
   console.log('');
   console.log('Workflow readiness:');
   for (const workflow of summary.workflows) {
     console.log(`  ${workflow.status.toUpperCase().padEnd(4, ' ')} ${workflow.title.padEnd(20, ' ')} ${String(workflow.score).padStart(3, ' ')}%`);
-    if (workflow.nextAction && showDetails) {
+    if (workflow.nextAction && showDetails && !noConfig) {
       console.log(`       ${workflow.nextAction}`);
     }
   }

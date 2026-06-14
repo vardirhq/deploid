@@ -214,8 +214,20 @@ program
   .action(async (options) => {
     await checkAndroidToolchain();
     const config = await loadConfig();
+    const cwd = process.cwd();
+
+    // Warn if web assets haven't been synced into the Android project yet
+    const { existsSync, readdirSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const syncedWebDir = join(cwd, 'android', 'app', 'src', 'main', 'assets', 'public');
+    if (!existsSync(syncedWebDir) || readdirSync(syncedWebDir).length === 0) {
+      console.error('❌ Web assets have not been synced into the Android project.');
+      console.error('  Run `deploid package` first, then re-run `deploid build`.');
+      process.exit(1);
+    }
+
     await runPluginCommand('build-android', {
-      cwd: process.cwd(),
+      cwd,
       config,
       debug: options.debug
     });

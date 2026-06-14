@@ -18,8 +18,11 @@ const assetsPlugin = (): PipelineStep => async ({ logger, config, cwd }: any) =>
   const outputDir = path.resolve(cwd, config.assets.output || 'assets-gen');
   
   if (!fs.existsSync(sourcePath)) {
-    logger.error(`Source logo not found: ${sourcePath}`);
-    return;
+    throw new Error(
+      `Source logo not found: ${sourcePath}\n` +
+      `  Copy your app logo to that path then re-run: deploid assets\n` +
+      `  Supported formats: SVG (recommended), PNG, JPEG`
+    );
   }
 
   // Ensure output directory exists

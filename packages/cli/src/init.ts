@@ -507,7 +507,6 @@ async function createCapacitorTemplate(cwd: string, metadata: AppMetadata, webDi
   "appId": "${metadata.appId}",
   "appName": "${metadata.appName}",
   "webDir": "${webDir}",
-  "bundledWebRuntime": false,
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2000
