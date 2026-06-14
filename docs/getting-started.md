@@ -1,144 +1,110 @@
 # Getting Started with Deploid
 
-This guide will help you get up and running with Deploid in minutes.
-
 ## Prerequisites
 
-- **Node.js** 18+ and npm/pnpm
-- **Android Studio** (for APK/AAB building)
-- **Java Development Kit** (JDK 11+)
+Before you start, make sure you have:
+
+- **Node.js 18+** — `node --version`
+- **Java 21+** — `java -version` (download at [adoptium.net](https://adoptium.net/))
+- **Android SDK** — set `ANDROID_HOME` to your SDK path
+  - Easiest: install [Android Studio](https://developer.android.com/studio), then set `ANDROID_HOME="$HOME/Android/Sdk"`
+
+Run `deploid doctor` at any point to see exactly what's missing.
 
 ## Installation
 
-### From Source (Development)
+```bash
+npm install -g @deploid/cli
+# or: pnpm add -g @deploid/cli
+```
+
+For development from source:
 
 ```bash
-# Clone the repository
 git clone https://github.com/MadsenDev/deploid.git
 cd deploid
-
-# Install dependencies
 pnpm install
-
-# Build all packages
 pnpm -r build
-
-# Setup for development
-./install-global.sh
-
-# Now you can use the deploid command
-deploid --help
-
-# Or add to your PATH for global access
-export PATH="$PATH:$HOME/.local/bin"
-deploid --help
-```
-
-### Alternative: Run Directly
-
-```bash
-# Run CLI directly without global installation
-node packages/cli/dist/index.js --help
-```
-
-### Global Installation (NPM Package)
-
-```bash
-# Install from npm (when published)
-npm install -g @deploid/cli
-
-# Or with pnpm
-pnpm add -g @deploid/cli
-
-# Or with yarn
-yarn global add @deploid/cli
-
-# Then use anywhere
-deploid --help
-deploid init
-deploid assets
+./install-global.sh    # creates ~/.local/bin/deploid symlink
 ```
 
 ## Quick Start
 
-### 1. Initialize a Project
+### 1. Initialize
 
 ```bash
-# Navigate to your web app directory
 cd my-web-app
-
-# Initialize Deploid
-node /path/to/deploid/packages/cli/dist/index.js init
-
-# Or with specific options
-node /path/to/deploid/packages/cli/dist/index.js init --framework vite --packaging capacitor
+deploid init
 ```
 
-This creates:
-- `deploid.config.ts` - Configuration file
-- `assets/` - Directory for your logo
-- `assets-gen/` - Generated assets output
-- `capacitor.config.json` - Capacitor configuration
+Deploid auto-detects your framework (Vite, Next.js, CRA) from `package.json`. It will:
+- Generate `deploid.config.ts`
+- Create `assets/` and `assets-gen/` directories
+- Create `capacitor.config.json`
+- Install `@capacitor/cli`, `@capacitor/core`, `@capacitor/android`
+- Add `android:build`, `android:deploy`, `android:ship`, `android:doctor` to your `package.json`
 
-### 2. Add Your Logo
+For CI or scripted use, skip all prompts:
+```bash
+deploid init --yes --app-name "MyApp" --app-id "com.example.myapp"
+```
+
+### 2. Add your logo
 
 ```bash
-# Add your logo (SVG or PNG)
 cp your-logo.svg assets/logo.svg
 ```
 
-### 3. Generate Assets
+SVG is recommended. PNG and JPEG also work.
+
+### 3. Package for Android
 
 ```bash
-# Generate all required icons and assets
-node /path/to/deploid/packages/cli/dist/index.js assets
+deploid package
 ```
 
-This generates:
-- **Android icons**: All density variants (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi)
-- **PWA icons**: 192px, 512px, Apple touch icon
-- **Favicons**: Multiple sizes (16px, 32px, 48px, 64px)
+This runs in one step:
+- Builds your web app (`npm run build` or equivalent)
+- Auto-generates icons if `assets-gen/` is empty and your logo exists
+- Syncs with Capacitor
+- Adds the Android platform if not already present
+- Applies your config (app name, ID, SDK versions, permissions)
 
-### 4. Package for Android
+### 4. Build the APK
 
 ```bash
-# Wrap your web app for Android
-node /path/to/deploid/packages/cli/dist/index.js package
+deploid build
 ```
 
-This:
-- Initializes Capacitor (if not already done)
-- Builds your web app
-- Syncs assets with Capacitor
-- Adds Android platform
-- Updates Android configuration
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
-### 5. Build APK/AAB
+If signing is configured in `deploid.config.ts`, a release AAB is also built.
+
+### 5. Deploy to a device
 
 ```bash
-# Build Android package
-node /path/to/deploid/packages/cli/dist/index.js build
+deploid deploy --launch
 ```
 
-This generates:
-- **Debug APK**: `android/app/build/outputs/apk/debug/app-debug.apk`
-- **Release AAB**: `android/app/build/outputs/bundle/release/app-release.aab` (with signing)
+Installs the APK on the first connected device/emulator and launches the app.
+Add `--logs` to tail logcat output.
+
+---
 
 ## Configuration
 
-### Basic Configuration
-
-Create a `deploid.config.ts` file:
+`deploid init` generates `deploid.config.ts` automatically. Minimal example:
 
 ```typescript
-export default {
+import type { DeploidConfig } from '@deploid/core';
+
+const config: DeploidConfig = {
   appName: 'MyApp',
   appId: 'com.example.myapp',
   web: {
     framework: 'vite',
     buildCommand: 'npm run build',
     webDir: 'dist',
-    pwa: { manifest: 'public/manifest.json', serviceWorker: true },
   },
   android: {
     packaging: 'capacitor',
@@ -151,126 +117,76 @@ export default {
     source: 'assets/logo.svg',
     output: 'assets-gen/',
   },
-  publish: {
-    github: { repo: 'your-username/your-repo', draft: true },
-  },
 };
+
+export default config;
 ```
 
-### Advanced Configuration
+See [Configuration Reference](configuration.md) for all options.
 
-```typescript
-export default {
-  appName: 'MyApp',
-  appId: 'com.example.myapp',
-  web: {
-    framework: 'vite',
-    buildCommand: 'npm run build',
-    webDir: 'dist',
-    pwa: { 
-      manifest: 'public/manifest.json', 
-      serviceWorker: true 
-    },
-  },
-  android: {
-    packaging: 'capacitor',
-    targetSdk: 34,
-    minSdk: 24,
-    permissions: ['INTERNET', 'CAMERA', 'STORAGE'],
-    signing: {
-      keystorePath: './android.keystore',
-      alias: 'mykey',
-      storePasswordEnv: 'ANDROID_STORE_PWD',
-      keyPasswordEnv: 'ANDROID_KEY_PWD',
-    },
-    version: { code: 5, name: '1.0.4' },
-  },
-  assets: {
-    source: 'assets/logo.svg',
-    output: 'assets-gen/',
-  },
-  publish: {
-    play: { 
-      track: 'internal', 
-      serviceAccountJson: 'secrets/play.json' 
-    },
-    github: { 
-      repo: 'your-username/your-repo', 
-      draft: true 
-    },
-  },
-};
-```
-
-## Supported Frameworks
-
-### Vite (React, Vue, Svelte)
+## Release workflow
 
 ```bash
-# Initialize for Vite
-deploid init --framework vite
+# Scaffold signing config and .env template
+deploid release init --yes
+
+# Set your keystore passwords
+export DEPLOID_ANDROID_STORE_PASSWORD="..."
+export DEPLOID_ANDROID_KEY_PASSWORD="..."
+
+# Bump version, build, generate changelog, publish
+deploid ship --patch --from-git
 ```
 
-### Next.js (Static Export)
+## Supported frameworks
 
-```bash
-# Initialize for Next.js
-deploid init --framework next
-```
+| Framework | Auto-detected? | webDir |
+|---|---|---|
+| Vite | Yes (detects `vite` in deps) | `dist` |
+| Next.js | Yes (detects `next` in deps) | `out` |
+| Create React App | Yes (detects `react-scripts`) | `build` |
+| Static HTML | Manual (`--framework static`) | `public` |
 
-### Create React App
-
-```bash
-# Initialize for CRA
-deploid init --framework cra
-```
-
-### Static HTML
-
-```bash
-# Initialize for static files
-deploid init --framework static
-```
+For Next.js, make sure `next.config.js` has `output: 'export'`.
 
 ## Troubleshooting
 
-### Common Issues
+**`deploid doctor`** is always the first thing to run — it tells you exactly what's wrong and what to fix.
 
-**1. Capacitor CLI not found**
+**Capacitor CLI not found after init**
 ```bash
-# Install Capacitor CLI globally
-npm install -g @capacitor/cli
+npm install @capacitor/cli @capacitor/core @capacitor/android
 ```
 
-**2. Android Studio not found**
-- Install Android Studio
-- Set up Android SDK
-- Add to PATH: `ANDROID_HOME` and `ANDROID_SDK_ROOT`
-
-**3. Java not found**
-- Install JDK 11+
-- Set `JAVA_HOME` environment variable
-
-**4. Build fails**
+**Android SDK not found**
 ```bash
-# Check Android Studio setup
-npx @capacitor/cli doctor
+# Add to ~/.bashrc or ~/.zshrc
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$PATH:$ANDROID_HOME/platform-tools"
+```
 
-# Clean and rebuild
-rm -rf android/
+**Java not found / wrong version**
+- Install JDK 21 from [adoptium.net](https://adoptium.net/)
+- Set `JAVA_HOME` to the JDK directory
+
+**Build fails after changing app config**
+```bash
+# Re-sync and rebuild
 deploid package
+deploid build
 ```
 
-### Debug Mode
-
+**Debug logging**
 ```bash
-# Enable debug logging
-DEPLOID_LOG_LEVEL=debug deploid assets
+deploid build --debug
+# or
+DEPLOID_LOG_LEVEL=debug deploid build
 ```
 
-## Next Steps
+## Next steps
 
 - [Configuration Reference](configuration.md)
-- [CLI Commands](cli-reference.md)
+- [CLI Reference](cli-reference.md)
+- [Android Troubleshooting](ANDROID_TROUBLESHOOTING.md)
 - [Plugin Development](plugins.md)
 - [Examples](examples.md)
