@@ -5,6 +5,31 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+async function checkAndroidToolchain(): Promise<void> {
+  const { execa } = await import('execa');
+  const problems: string[] = [];
+
+  try {
+    await execa('java', ['-version'], { stdio: 'pipe' });
+  } catch {
+    problems.push('Java not found. Install JDK 21+: https://adoptium.net/');
+  }
+
+  if (!process.env.ANDROID_HOME && !process.env.ANDROID_SDK_ROOT) {
+    problems.push(
+      'ANDROID_HOME is not set. Install Android Studio or the Android command-line tools,\n' +
+      '  then set: export ANDROID_HOME="$HOME/Android/Sdk"'
+    );
+  }
+
+  if (problems.length > 0) {
+    console.error('❌ Missing Android toolchain requirements:\n');
+    for (const problem of problems) console.error(`  • ${problem}`);
+    console.error('\n  Run `deploid doctor` for a full environment check.');
+    process.exit(1);
+  }
+}
+
 // Get version from package.json
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,7 +44,7 @@ program
 program
   .command('init')
   .description('Setup config and base folders')
-  .option('-f, --framework <framework>', 'Web framework (vite|next|cra|static)', 'vite')
+  .option('-f, --framework <framework>', 'Web framework — auto-detected if omitted (vite|next|cra|static)')
   .option('-p, --packaging <engine>', 'Android packaging engine (capacitor|tauri|twa)', 'capacitor')
   .option('--app-name <name>', 'App display name')
   .option('--app-id <id>', 'App ID / package ID (reverse-domain)')
@@ -27,6 +52,7 @@ program
   .option('--author-name <name>', 'Author name')
   .option('--author-email <email>', 'Author email')
   .option('--assets-source <path>', 'Asset source path to store in config')
+  .option('--firebase', 'Set up Firebase push notifications during init')
   .option('--force', 'Overwrite existing deploid.config.ts')
   .option('--all-plugins', 'Install all available plugins without prompts')
   .option('--debug', 'Enable debug logging')
@@ -137,6 +163,7 @@ program
   .description('Wrap app for Android (Capacitor/Tauri/TWA)')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
+    await checkAndroidToolchain();
     const config = await loadConfig();
     if (config.android.packaging !== 'capacitor') {
       throw new Error(`Packaging engine "${config.android.packaging}" is not supported in Deploid 2.0. Use "capacitor".`);
@@ -166,6 +193,7 @@ program
   .description('Build APK/AAB')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
+    await checkAndroidToolchain();
     const config = await loadConfig();
     await runPluginCommand('build-android', {
       cwd: process.cwd(),
@@ -336,7 +364,8 @@ program
       console.log(stdout);
     } catch (error) {
       console.error('❌ ADB not found. Please install Android SDK Platform Tools.');
-      console.log('Install: sudo pacman -S android-tools');
+      console.error('  Download: https://developer.android.com/tools/releases/platform-tools');
+      console.error('  Then add the tools directory to your PATH and set ANDROID_HOME.');
     }
   });
 

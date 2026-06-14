@@ -17,7 +17,11 @@ export async function loadConfig(cwd: string = process.cwd()): Promise<DeploidCo
       return cfg;
     }
   }
-  throw new Error('No deploid config found');
+  throw new Error(
+    'No deploid config found in ' + cwd + '.\n' +
+    '  Run `deploid init` to set up this project, or make sure you are in the right directory.\n' +
+    '  Expected one of: ' + candidates.join(', ')
+  );
 }
 
 function pathToFileURL(p: string): URL {
