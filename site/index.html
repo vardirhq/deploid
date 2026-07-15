@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploid — ship your web app to Android</title>
+<meta name="description" content="Deploid is a CLI that turns any Vite, Next.js, or React app into a signed, published Android package — icons, Capacitor, Gradle, signing, changelogs and Play Store uploads handled for you.">
+<meta property="og:title" content="Deploid — ship your web app to Android">
+<meta property="og:description" content="Build → package → sign → publish web apps to Android. Four commands, no Android Studio.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0c10'/%3E%3Ctext x='5' y='23' font-family='monospace' font-size='18' font-weight='bold' fill='%235ad19a'%3E%E2%80%BA_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  :root{--bg:#0b0c10;--page-grad:radial-gradient(1200px 700px at 50% -10%,#181a22 0%,#0e0f14 42%,#0b0c10 100%);--panel:#101117;--panel-head:#181a21;--nav-bg:rgba(13,14,19,.72);--ink:#d7dae1;--ink-strong:#f0f2f7;--muted:#9298a6;--muted-dim:#6b7080;--border:rgba(255,255,255,.09);--border-soft:rgba(255,255,255,.06);--border-strong:rgba(255,255,255,.13);--accent:#8b9dff;--accent-hover:#a3b1ff;--green:#5ad19a;--amber:#e5c07b;--pink:#e879a6;--on-accent:#0b0c10;--on-accent-dim:rgba(11,12,16,.55);--on-accent-badge:rgba(11,12,16,.18);--scanline:rgba(255,255,255,.014);--shadow-panel:0 30px 60px -30px rgba(0,0,0,.7);--glow:0 40px 80px -30px rgba(0,0,0,.8),0 0 90px -40px rgba(139,157,255,.35);--cta-glow:0 0 90px -50px rgba(139,157,255,.6);--link:#9aa9ff;--link-hover:#c3ccff}
+  body[data-theme="paper"]{--bg:#f2efe7;--page-grad:radial-gradient(1200px 700px at 50% -10%,#fbfaf6 0%,#f1eee6 42%,#e9e5da 100%);--panel:#fffdf8;--panel-head:#eeeade;--nav-bg:rgba(250,248,243,.85);--ink:#33343a;--ink-strong:#17171a;--muted:#5f6470;--muted-dim:#8a8f9c;--border:rgba(35,30,15,.15);--border-soft:rgba(35,30,15,.09);--border-strong:rgba(35,30,15,.22);--accent:#4b57c8;--accent-hover:#3a45b2;--green:#1f8a52;--amber:#9a6b0f;--pink:#bb3f77;--on-accent:#ffffff;--on-accent-dim:rgba(255,255,255,.72);--on-accent-badge:rgba(255,255,255,.22);--scanline:rgba(60,50,20,.025);--shadow-panel:0 24px 48px -28px rgba(50,42,22,.35);--glow:0 30px 60px -30px rgba(50,42,22,.3),0 0 70px -45px rgba(75,87,200,.3);--cta-glow:0 0 70px -45px rgba(75,87,200,.35);--link:#4b57c8;--link-hover:#3a45b2}
+  body{transition:background .3s,color .3s}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;-webkit-font-smoothing:antialiased}
+  a{color:var(--link);text-decoration:none;transition:color .18s}
+  a:hover{color:var(--link-hover)}
+  ::selection{background:rgba(139,157,255,.3)}
+  html{scroll-behavior:smooth}
+  section{scroll-margin-top:72px}
+  h1,h2{text-wrap:balance}
+  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+  @keyframes riseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .dp-hero{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+  .dp-feat{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .dp-two{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:start}
+  .dp-fw{display:flex;align-items:center;gap:34px;flex-wrap:wrap}
+  .dp-navlinks{display:flex;gap:2px;margin-left:14px}
+  .dp-h1{font-size:46px}
+  .dp-sec{padding-left:22px;padding-right:22px}
+  /* hover states (inline hover isn't possible) */
+  .nav-link{padding:6px 12px;border-radius:7px;color:var(--muted);transition:background .18s,color .18s}
+  .nav-link:hover{background:var(--border-soft);color:var(--ink)}
+  .theme-btn{font-family:inherit;font-size:12px;cursor:pointer;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:8px;padding:7px 12px;transition:border-color .18s,color .18s}
+  .theme-btn:hover{border-color:rgba(154,169,255,.5);color:var(--ink)}
+  .gh-btn{display:flex;align-items:center;gap:7px;font-size:12.5px;padding:7px 13px;border:1px solid var(--border-strong);border-radius:8px;color:var(--ink);transition:border-color .18s,background .18s}
+  .gh-btn:hover{border-color:rgba(154,169,255,.5);background:rgba(139,157,255,.08);color:var(--ink)}
+  .btn-primary{transition:background .18s}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-secondary{transition:border-color .18s}
+  .btn-secondary:hover{border-color:rgba(154,169,255,.5)}
+  .feat-card{transition:border-color .18s,transform .18s,box-shadow .18s}
+  .feat-card:hover{border-color:rgba(139,157,255,.4);transform:translateY(-3px);box-shadow:var(--shadow-panel)}
+  .step-btn{transition:border-color .18s,background .18s}
+  .step-btn:hover{border-color:rgba(139,157,255,.45)}
+  .copy-btn{transition:color .18s,border-color .18s}
+  .copy-btn:hover{color:var(--ink-strong);border-color:rgba(139,157,255,.5)}
+  .plugin-row{transition:border-color .18s}
+  .plugin-row:hover{border-color:rgba(139,157,255,.35)}
+  @media(max-width:900px){
+    .dp-hero{grid-template-columns:1fr;gap:32px}
+    .dp-feat{grid-template-columns:repeat(2,1fr)}
+    .dp-two{grid-template-columns:1fr}
+    .dp-navlinks{display:none}
+    .dp-h1{font-size:clamp(32px,8.5vw,44px)}
+  }
+  @media(max-width:560px){
+    .dp-feat{grid-template-columns:1fr}
+    .dp-sec{padding-left:16px;padding-right:16px}
+    .dp-tblhead{display:none}
+    .dp-tblrow{grid-template-columns:1fr !important;gap:7px !important;padding:14px 16px !important}
+    .dp-star-txt{display:none}
+    .dp-fw{gap:12px 20px}
+  }
+</style>
+</head>
+<body>
+<div style="min-height:100vh;background:var(--page-grad)">
+
+<div style="position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,var(--scanline) 0 1px,transparent 1px 3px);opacity:.5;z-index:0"></div>
+
+<!-- ===== NAV ===== -->
+<div style="position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);background:var(--nav-bg);border-bottom:1px solid var(--border-soft)">
+  <div class="dp-sec" style="max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:11px 22px">
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span>
+      <span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span>
+      <span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:-.5px;color:var(--ink-strong);margin-left:6px">
+      <span style="color:var(--green)">›_</span>deploid
+    </div>
+    <div class="dp-navlinks" style="font-size:12.5px">
+      <a href="#features" class="nav-link">features</a>
+      <a href="#commands" class="nav-link">commands</a>
+      <a href="#ship" class="nav-link">ship</a>
+      <a href="#install" class="nav-link">install</a>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+      <button id="themeBtn" class="theme-btn">☀ paper</button>
+      <a href="https://github.com/vardirhq/deploid" target="_blank" rel="noopener" class="gh-btn">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        <span class="dp-star-txt">Star</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HERO ===== -->
+<section class="dp-sec" style="max-width:1180px;margin:0 auto;padding:64px 22px 36px;position:relative;z-index:1">
+  <div class="dp-hero">
+    <div style="animation:riseIn .6s ease both">
+      <div style="display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--green);border:1px solid rgba(90,209,154,.28);background:rgba(90,209,154,.07);padding:5px 11px;border-radius:99px;margin-bottom:24px">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)"></span>
+        web app → signed Android package
+      </div>
+      <h1 class="dp-h1" style="line-height:1.08;letter-spacing:-1.5px;font-weight:800;color:var(--ink-strong);margin:0 0 20px">
+        Ship your web app to Android.
+        <span style="color:var(--accent)">Without the Android expertise.</span>
+      </h1>
+      <p style="font-size:15.5px;line-height:1.65;color:var(--muted);max-width:460px;margin:0 0 28px">
+        Deploid is a CLI that turns any Vite, Next.js, or React app into a
+        signed, published Android package — icons, Capacitor, Gradle, signing,
+        changelogs and Play Store uploads handled for you.
+      </p>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn-primary copy-install" style="display:flex;align-items:center;gap:11px;font-family:inherit;font-size:13.5px;cursor:pointer;background:var(--accent);color:var(--on-accent);font-weight:700;border:none;padding:12px 15px;border-radius:9px">
+          <span style="color:var(--on-accent-dim)">$</span>npm i -g @deploid/cli
+          <span class="install-label" style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--on-accent-badge)">copy</span>
+        </button>
+        <a href="#commands" class="btn-secondary" style="font-size:14px;padding:12px 18px;border:1px solid var(--border-strong);border-radius:9px;color:var(--ink)">Read the manual →</a>
+      </div>
+      <div style="display:flex;gap:22px;margin-top:30px;font-size:12px;color:var(--muted-dim);flex-wrap:wrap">
+        <span>✓ no Android Studio</span>
+        <span>✓ 4 commands to prod</span>
+        <span>✓ CI-ready</span>
+      </div>
+    </div>
+
+    <!-- hero terminal -->
+    <div style="animation:riseIn .7s ease .1s both;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--panel);box-shadow:var(--glow)">
+      <div style="display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
+        <span style="width:11px;height:11px;border-radius:50%;background:#ff5f57"></span>
+        <span style="width:11px;height:11px;border-radius:50%;background:#febc2e"></span>
+        <span style="width:11px;height:11px;border-radius:50%;background:#28c840"></span>
+        <span style="margin-left:8px;font-size:11.5px;color:var(--muted-dim)">my-web-app — deploid — zsh</span>
+      </div>
+      <div style="padding:20px 20px 22px;font-size:13px;line-height:1.85;min-height:330px">
+        <div><span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> init</div>
+        <div style="color:var(--muted-dim)">  ✔ detected <span style="color:var(--amber)">Vite (React)</span> · wrote deploid.config.ts</div>
+        <div style="color:var(--muted-dim)">  ✔ installed @capacitor/{core,cli,android}</div>
+        <div style="height:8px"></div>
+        <div><span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> package</div>
+        <div style="color:var(--muted-dim)">  ✔ icons generated · 5 densities + PWA</div>
+        <div style="color:var(--muted-dim)">  ✔ AndroidManifest / build.gradle configured</div>
+        <div style="height:8px"></div>
+        <div><span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> build</div>
+        <div style="color:var(--muted-dim)">  ✔ <span style="color:var(--green)">app-release.aab</span> — signed (12.4 MB)</div>
+        <div style="height:8px"></div>
+        <div><span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> deploy --launch</div>
+        <div style="color:var(--muted-dim)">  ✔ Pixel 8 · installed &amp; launched 🚀</div>
+        <div style="height:8px"></div>
+        <div><span style="color:var(--green)">➜</span> <span id="typed" style="color:var(--ink)"></span><span style="display:inline-block;width:8px;height:15px;background:var(--accent);transform:translateY(2px);animation:blink 1.05s step-end infinite"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== framework strip ===== -->
+<div class="dp-sec" style="max-width:1180px;margin:0 auto;padding:14px 22px 10px;position:relative;z-index:1">
+  <div class="dp-fw" style="font-size:12.5px;color:var(--muted-dim);border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);padding:16px 2px">
+    <span style="color:var(--muted-dim)">// works with</span>
+    <span style="color:var(--muted);font-weight:700">Vite</span>
+    <span style="color:var(--muted);font-weight:700">Next.js</span>
+    <span style="color:var(--muted);font-weight:700">Create React App</span>
+    <span style="color:var(--muted);font-weight:700">React · Vue · Svelte</span>
+    <span style="color:var(--muted);font-weight:700">Static HTML</span>
+    <span style="color:var(--muted-dim)">— detected from package.json</span>
+  </div>
+</div>
+
+<!-- ===== FEATURES ===== -->
+<section id="features" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:60px 22px 24px;position:relative;z-index:1">
+  <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## THE TOIL IT KILLS</div>
+  <h2 style="font-size:clamp(24px,4.4vw,30px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 32px;max-width:660px">Everything between <span style="color:var(--accent)">a working web app</span> and <span style="color:var(--accent)">the Play Store</span> — automated.</h2>
+  <div class="dp-feat" id="features-grid"></div>
+</section>
+
+<!-- ===== COMMANDS explorer ===== -->
+<section id="commands" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## THE HAPPY PATH</div>
+  <h2 style="font-size:clamp(24px,4.4vw,30px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 8px">Four commands. Click one.</h2>
+  <p style="font-size:14px;color:var(--muted);margin:0 0 26px">From a fresh checkout to a phone in your hand.</p>
+
+  <div class="dp-two">
+    <div id="steps-list" style="display:flex;flex-direction:column;gap:9px"></div>
+
+    <!-- output pane -->
+    <div style="border-radius:13px;overflow:hidden;border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow-panel);position:sticky;top:76px">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
+        <span style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#febc2e"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#28c840"></span>
+        <span id="active-title" style="margin-left:6px;font-size:11px;color:var(--muted-dim)">deploid init</span>
+        <button id="copy-active" class="copy-btn" style="margin-left:auto;font-family:inherit;font-size:10.5px;cursor:pointer;color:var(--muted);background:var(--border-soft);border:1px solid var(--border);border-radius:6px;padding:4px 9px">copy</button>
+      </div>
+      <div style="padding:18px 18px 22px;font-size:12.5px;line-height:1.9;min-height:250px">
+        <div style="color:var(--ink);margin-bottom:8px"><span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> <span id="active-cmd">init</span></div>
+        <div id="active-out"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DOCTOR ===== -->
+<section class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div class="dp-two">
+    <div>
+      <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## WHEN IT BREAKS</div>
+      <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 16px"><span style="color:var(--accent)">deploid doctor</span> tells you exactly what's wrong.</h2>
+      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 20px">Java version, Android SDK, Capacitor, signing config, Gradle wrapper, SDK licenses — audited before you file an issue. Fails fast with a clear message instead of a cryptic Gradle error three minutes in.</p>
+      <div id="doctor-checks" style="display:flex;flex-direction:column;gap:9px"></div>
+    </div>
+    <div style="border-radius:13px;overflow:hidden;border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow-panel)">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
+        <span style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#febc2e"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#28c840"></span>
+      </div>
+      <div style="padding:18px;font-size:12px;line-height:1.85">
+        <div style="color:var(--ink)"><span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> doctor</div>
+        <div style="height:6px"></div>
+        <div style="color:var(--ink-strong);font-weight:700">Deploid Doctor</div>
+        <div style="color:var(--muted-dim)">Project: ~/my-web-app</div>
+        <div style="color:var(--amber)">Status: ACTION NEEDED (8 passed, 1 warn, 1 fail)</div>
+        <div style="height:8px"></div>
+        <div style="color:var(--muted-dim)">Workflow readiness:</div>
+        <div><span style="color:var(--green)">  PASS</span> <span style="color:var(--ink)">Project setup</span>        100%</div>
+        <div><span style="color:var(--green)">  PASS</span> <span style="color:var(--ink)">Android build</span>        100%</div>
+        <div><span style="color:var(--amber)">  WARN</span> <span style="color:var(--ink)">Release readiness</span>    60%</div>
+        <div><span style="color:var(--green)">  PASS</span> <span style="color:var(--ink)">Device deploy</span>        100%</div>
+        <div style="height:8px"></div>
+        <div><span style="color:var(--amber)">  WARN</span> <span style="color:var(--ink)">Android signing</span> — no config.</div>
+        <div style="color:var(--muted-dim)">       Run: <span style="color:var(--accent)">deploid release init</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COMPARISON ===== -->
+<section class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## VS MANUAL SETUP</div>
+  <h2 style="font-size:clamp(24px,4.4vw,30px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 8px">The afternoon you get back.</h2>
+  <p style="font-size:14px;color:var(--muted);margin:0 0 26px">Same result. One of these is a <span style="color:var(--amber)">diff</span> of your life.</p>
+  <div class="dp-two" style="align-items:stretch">
+    <div style="border-radius:13px;overflow:hidden;border:1px solid var(--border);background:var(--panel);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
+        <span style="font-size:12px;font-weight:700;color:var(--pink)">− manual setup</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted-dim)">~1–2 days, first time</span>
+      </div>
+      <div id="manual-steps" style="padding:16px 18px 20px;font-size:12.5px;line-height:2;flex:1"></div>
+    </div>
+    <div style="border-radius:13px;overflow:hidden;border:1px solid rgba(90,209,154,.35);background:var(--panel);box-shadow:var(--shadow-panel);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
+        <span style="font-size:12px;font-weight:700;color:var(--green)">+ with deploid</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted-dim)">~5 minutes</span>
+      </div>
+      <div style="padding:16px 18px 20px;font-size:12.5px;line-height:2;flex:1">
+        <div id="deploid-steps"></div>
+        <div style="height:10px"></div>
+        <div style="color:var(--muted-dim)">// everything on the left, handled.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FRAMEWORKS ===== -->
+<section class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## SUPPORTED FRAMEWORKS</div>
+  <h2 style="font-size:clamp(24px,4.4vw,30px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 8px">Detected from your <span style="color:var(--accent)">package.json</span>.</h2>
+  <p style="font-size:14px;color:var(--muted);margin:0 0 24px">No <span style="color:var(--amber)">--framework</span> flag for standard setups.</p>
+  <div style="border:1px solid var(--border);border-radius:13px;overflow:hidden;background:var(--panel)">
+    <div class="dp-tblhead" style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;font-size:11px;color:var(--muted-dim);letter-spacing:.5px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:var(--panel-head)">
+      <span>FRAMEWORK</span><span>DETECTION</span><span>BUILD OUTPUT</span>
+    </div>
+    <div id="frameworks"></div>
+  </div>
+</section>
+
+<!-- ===== SHIP workflow ===== -->
+<section id="ship" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## THE RELEASE CHAIN</div>
+  <h2 style="font-size:clamp(24px,4.4vw,30px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 8px">One command ships it.</h2>
+  <p style="font-size:14px;color:var(--muted);margin:0 0 26px"><span style="color:var(--amber)">deploid ship --patch --from-git</span> runs the whole chain:</p>
+  <div id="chain" style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch"></div>
+  <div style="margin-top:16px;border:1px dashed var(--border-strong);border-radius:10px;padding:14px 16px;font-size:12.5px;color:var(--muted)">
+    <span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> ci init github <span style="color:var(--muted-dim)">→ writes a complete .github/workflows/deploid-release.yml</span>
+  </div>
+</section>
+
+<!-- ===== API + PLUGINS ===== -->
+<section class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div class="dp-two">
+    <div>
+      <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## PROGRAMMATIC API</div>
+      <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 14px">Drive it from your own tooling.</h2>
+      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Import <span style="color:var(--accent)">@deploid/core</span> instead of shelling out — or run <span style="color:var(--amber)">deploid daemon</span> for a language-agnostic local HTTP interface.</p>
+      <div style="border-radius:13px;overflow:hidden;border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow-panel)">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
+          <span style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#febc2e"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#28c840"></span>
+          <span style="margin-left:6px;font-size:11px;color:var(--muted-dim)">ship.ts</span>
+        </div>
+        <div style="padding:16px 18px;font-size:12px;line-height:1.85;overflow:auto">
+          <div><span style="color:#c678dd">import</span> { runDoctorCommand, inspectArtifacts } <span style="color:#c678dd">from</span> <span style="color:var(--green)">'@deploid/core'</span>;</div>
+          <div style="height:8px"></div>
+          <div><span style="color:var(--muted-dim)">// full doctor check, JSON out</span></div>
+          <div><span style="color:#c678dd">await</span> <span style="color:#61afef">runDoctorCommand</span>({ cwd, doctorOptions: { json: <span style="color:var(--amber)">true</span> } });</div>
+          <div style="height:8px"></div>
+          <div><span style="color:var(--muted-dim)">// inspect what was built</span></div>
+          <div><span style="color:#c678dd">const</span> out = <span style="color:#61afef">inspectArtifacts</span>(cwd);</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## PLUGIN PIPELINE</div>
+      <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 14px">Every step is a plugin.</h2>
+      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Assets, packaging, build, deploy, publish — all plugins on one pipeline. Scaffold your own custom step:</p>
+      <div style="border:1px dashed var(--border-strong);border-radius:10px;padding:13px 15px;font-size:12.5px;margin-bottom:14px">
+        <span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> plugin init my-custom-step
+      </div>
+      <div id="plugin-stages" style="display:flex;flex-direction:column;gap:9px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INSTALL / CTA ===== -->
+<section id="install" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 30px;position:relative;z-index:1">
+  <div style="border-radius:16px;border:1px solid rgba(139,157,255,.22);background:radial-gradient(600px 260px at 50% 0%,rgba(139,157,255,.12),transparent),var(--panel);padding:44px 28px;text-align:center;box-shadow:var(--cta-glow)">
+    <h2 style="font-size:clamp(24px,5vw,32px);font-weight:800;letter-spacing:-1px;color:var(--ink-strong);margin:0 0 12px">Your web app is already an Android app.<br>It just doesn't know it yet.</h2>
+    <p style="font-size:14px;color:var(--muted);margin:0 0 26px">Node 18+ · Java 21+ · Android SDK. <span style="color:var(--green)">deploid doctor</span> checks the rest.</p>
+    <div style="display:inline-flex;align-items:stretch;gap:0;border:1px solid var(--border-strong);border-radius:11px;overflow:hidden;max-width:100%">
+      <div style="padding:14px 18px;font-size:14px;color:var(--ink);background:var(--bg);overflow:auto;white-space:nowrap"><span style="color:var(--green)">$</span> npm install -g @deploid/cli</div>
+      <button class="btn-primary copy-install" style="font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--on-accent);padding:0 18px"><span class="install-label">copy</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="dp-sec" style="max-width:1180px;margin:0 auto;padding:24px 22px 44px;position:relative;z-index:1;border-top:1px solid var(--border-soft);display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+  <div style="display:flex;align-items:center;gap:9px;font-weight:800;font-size:14px;color:var(--ink-strong)"><span style="color:var(--green)">›_</span>deploid</div>
+  <span style="font-size:12px;color:var(--muted-dim)">Build → package → sign → publish web apps to Android.</span>
+  <div style="margin-left:auto;display:flex;gap:18px;font-size:12.5px">
+    <a href="https://github.com/vardirhq/deploid" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/vardirhq/deploid#documentation" target="_blank" rel="noopener">Docs</a>
+    <span style="color:var(--muted-dim)">MIT © MadsenDev</span>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var $ = function(s, r){ return (r||document).querySelector(s); };
+  function el(tag, attrs, html){
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+
+  /* ---------- data ---------- */
+  var commands = [
+    { cmd:"init", desc:"Detects framework, writes typed config, installs Capacitor.",
+      out:["✔ detected Vite (React)","✔ wrote deploid.config.ts","✔ installed @capacitor/{core,cli,android}","✔ added android:build / :deploy / :ship scripts","no Firebase prompts. no plugin interrogation."] },
+    { cmd:"package", desc:"Builds web app, generates icons, configures the Android project.",
+      out:["✔ ran build → dist/","✔ icons at 5 densities + PWA sizes","✔ synced assets into Capacitor","✔ AndroidManifest.xml / build.gradle / strings.xml","✔ added android platform"] },
+    { cmd:"build", desc:"Validates toolchain, then compiles debug APK + signed release AAB.",
+      out:["✔ Java 21 · ANDROID_HOME ok","✔ app-debug.apk (14.1 MB)","✔ app-release.aab — signed (12.4 MB)","fails fast on a bad toolchain — not 3 min into Gradle."] },
+    { cmd:"deploy --launch", desc:"Finds devices, installs, launches, tails logcat.",
+      out:["✔ found device: Pixel 8 (adb)","✔ installed app-debug.apk","✔ launched com.example.myapp 🚀","tailing logcat… ^C to stop"] }
+  ];
+  var stepColors = [
+    { border:"rgba(90,209,154,.35)", bg:"rgba(90,209,154,.06)", num:"var(--green)" },
+    { border:"rgba(139,157,255,.3)", bg:"rgba(139,157,255,.05)", num:"var(--accent)" },
+    { border:"rgba(229,192,123,.3)", bg:"rgba(229,192,123,.05)", num:"var(--amber)" },
+    { border:"rgba(232,121,166,.3)", bg:"rgba(232,121,166,.05)", num:"var(--pink)" }
+  ];
+  var features = [
+    { icon:"◈", title:"Auto icon generation", body:"Every Android density + PWA size, straight from your logo SVG. No exporting at six sizes by hand." },
+    { icon:"⚙", title:"Capacitor & Gradle", body:"AndroidManifest, build.gradle and strings.xml written from one typed config file." },
+    { icon:"🔐", title:"Signing & releases", body:"Scaffolds keystore config, .env template and secrets dir. Signs the AAB for you." },
+    { icon:"↑", title:"Publish anywhere", body:"GitHub Releases and Play Console uploads, plus a generated changelog from git." }
+  ];
+  var doctorChecks = [
+    { tag:"PASS", color:"var(--green)", label:"Project setup", pct:"100%" },
+    { tag:"PASS", color:"var(--green)", label:"Android build", pct:"100%" },
+    { tag:"WARN", color:"var(--amber)", label:"Release readiness", pct:"60%" },
+    { tag:"PASS", color:"var(--green)", label:"Device deploy", pct:"100%" }
+  ];
+  var manualSteps = [
+    "Install Android Studio (~10 GB) and learn its UI",
+    "Hand-configure Capacitor, sync scripts, plugins",
+    "Export icons at 6 densities, name them correctly",
+    "Edit AndroidManifest.xml, build.gradle, strings.xml",
+    "Generate a keystore, wire signing configs, keep secrets safe",
+    "Decode Gradle stack traces when any of it is wrong",
+    "Write Play Console upload + changelog tooling yourself"
+  ];
+  var deploidSteps = ["init","package","build","ship --patch --from-git"];
+  var pluginStages = [
+    { n:1, name:"assets", desc:"Generate icons at every density." },
+    { n:2, name:"package", desc:"Wrap web build in Capacitor." },
+    { n:3, name:"build", desc:"Compile APK + signed AAB." },
+    { n:4, name:"deploy", desc:"Install & launch on device." },
+    { n:5, name:"publish", desc:"Upload to Releases / Play." }
+  ];
+  var frameworks = [
+    { name:"Vite", sub:"(React, Vue, Svelte)", detect:"Auto", out:"dist/", tagColor:"var(--green)", tagBorder:"rgba(90,209,154,.3)", tagBg:"rgba(90,209,154,.07)" },
+    { name:"Next.js", sub:"(static export)", detect:"Auto", out:"out/", tagColor:"var(--green)", tagBorder:"rgba(90,209,154,.3)", tagBg:"rgba(90,209,154,.07)" },
+    { name:"Create React App", sub:"", detect:"Auto", out:"build/", tagColor:"var(--green)", tagBorder:"rgba(90,209,154,.3)", tagBg:"rgba(90,209,154,.07)" },
+    { name:"Static HTML", sub:"", detect:"--framework static", out:"public/", tagColor:"var(--amber)", tagBorder:"rgba(229,192,123,.3)", tagBg:"rgba(229,192,123,.07)" }
+  ];
+  var chain = [
+    { n:1, title:"Version bump", body:"package.json + build.gradle in sync." },
+    { n:2, title:"Signed build", body:"Release AAB, signed & validated." },
+    { n:3, title:"Changelog", body:"CHANGELOG.md from git history." },
+    { n:4, title:"Publish", body:"GitHub Releases + Play Store." }
+  ];
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  /* ---------- render static-ish lists ---------- */
+  var fg = $("#features-grid");
+  features.forEach(function(f){
+    fg.appendChild(el("div", { class:"feat-card", style:"border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent);border-radius:12px;padding:20px 18px" },
+      '<div style="font-size:18px;color:var(--green);margin-bottom:12px">'+esc(f.icon)+'</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--ink-strong);margin-bottom:8px">'+esc(f.title)+'</div>'+
+      '<div style="font-size:12.5px;line-height:1.6;color:var(--muted)">'+esc(f.body)+'</div>'));
+  });
+
+  var dc = $("#doctor-checks");
+  doctorChecks.forEach(function(c){
+    dc.appendChild(el("div", { style:"display:flex;align-items:center;gap:12px;font-size:12.5px" },
+      '<span style="font-size:11px;font-weight:700;color:'+c.color+';min-width:44px">'+c.tag+'</span>'+
+      '<span style="color:var(--ink);flex:1">'+esc(c.label)+'</span>'+
+      '<span style="color:var(--muted-dim)">'+c.pct+'</span>'));
+  });
+
+  var ms = $("#manual-steps");
+  manualSteps.forEach(function(m){
+    ms.appendChild(el("div", { style:"color:var(--muted)" }, '<span style="color:var(--pink)">−</span> '+esc(m)));
+  });
+
+  var ds = $("#deploid-steps");
+  deploidSteps.forEach(function(d){
+    ds.appendChild(el("div", { style:"color:var(--ink)" }, '<span style="color:var(--green)">+</span> <span style="color:var(--accent)">deploid</span> '+esc(d)));
+  });
+
+  var ps = $("#plugin-stages");
+  pluginStages.forEach(function(p){
+    ps.appendChild(el("div", { class:"plugin-row", style:"display:flex;align-items:center;gap:12px;font-size:12.5px;border:1px solid var(--border-soft);border-radius:9px;padding:11px 13px" },
+      '<span style="font-size:12px;color:var(--accent);font-weight:700;min-width:18px">'+p.n+'</span>'+
+      '<span style="color:var(--ink-strong);font-weight:700;min-width:78px">'+esc(p.name)+'</span>'+
+      '<span style="color:var(--muted);flex:1">'+esc(p.desc)+'</span>'));
+  });
+
+  var fw = $("#frameworks");
+  frameworks.forEach(function(f){
+    fw.appendChild(el("div", { class:"dp-tblrow", style:"display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;font-size:13px;padding:15px 18px;border-bottom:1px solid var(--border-soft);align-items:center" },
+      '<span style="color:var(--ink-strong);font-weight:700">'+esc(f.name)+' <span style="color:var(--muted-dim);font-weight:400">'+esc(f.sub)+'</span></span>'+
+      '<span><span style="font-size:11px;font-weight:700;color:'+f.tagColor+';border:1px solid '+f.tagBorder+';background:'+f.tagBg+';padding:3px 9px;border-radius:6px">'+esc(f.detect)+'</span></span>'+
+      '<span style="color:var(--green)">'+esc(f.out)+'</span>'));
+  });
+
+  var ch = $("#chain");
+  chain.forEach(function(c){
+    ch.appendChild(el("div", { style:"flex:1;min-width:150px;border:1px solid var(--border);border-radius:11px;padding:16px;background:linear-gradient(180deg,rgba(139,157,255,.05),transparent)" },
+      '<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px">STEP '+c.n+'</div>'+
+      '<div style="font-size:13.5px;font-weight:700;color:var(--ink-strong);margin-bottom:6px">'+esc(c.title)+'</div>'+
+      '<div style="font-size:11.5px;line-height:1.5;color:var(--muted)">'+esc(c.body)+'</div>'));
+  });
+
+  /* ---------- command explorer ---------- */
+  var active = 0;
+  var stepsList = $("#steps-list");
+  var stepBtns = [];
+  commands.forEach(function(c, i){
+    var b = el("button", { class:"step-btn", style:"text-align:left;font-family:inherit;cursor:pointer;border-radius:11px;padding:15px 16px;display:flex;gap:14px;align-items:flex-start" },
+      '<span class="step-num" style="font-size:12px;font-weight:700;margin-top:1px"></span>'+
+      '<span style="flex:1">'+
+        '<span style="display:block;font-size:14px;font-weight:700;color:var(--ink-strong)"><span style="color:var(--accent)">deploid</span> '+esc(c.cmd)+'</span>'+
+        '<span style="display:block;font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">'+esc(c.desc)+'</span>'+
+      '</span>');
+    b.querySelector(".step-num").textContent = "0"+(i+1);
+    b.addEventListener("click", function(){ setActive(i); });
+    stepBtns.push(b);
+    stepsList.appendChild(b);
+  });
+
+  function setActive(i){
+    active = i;
+    stepBtns.forEach(function(b, j){
+      var num = b.querySelector(".step-num");
+      if (j === i){
+        b.style.border = "1px solid "+stepColors[i].border;
+        b.style.background = stepColors[i].bg;
+        num.style.color = stepColors[i].num;
+      } else {
+        b.style.border = "1px solid var(--border)";
+        b.style.background = "transparent";
+        num.style.color = "var(--muted-dim)";
+      }
+    });
+    var c = commands[i];
+    $("#active-title").textContent = "deploid " + c.cmd;
+    $("#active-cmd").textContent = c.cmd;
+    var out = $("#active-out");
+    out.innerHTML = "";
+    c.out.forEach(function(line){
+      out.appendChild(el("div", { style:"color:var(--muted)" }, esc(line)));
+    });
+    setCopyLabel($("#copy-active"), "copy");
+  }
+  setActive(0);
+
+  /* ---------- copy buttons ---------- */
+  function copyText(t){ try { navigator.clipboard.writeText(t); } catch(e){} }
+  function setCopyLabel(node, txt){ if (node) node.textContent = txt; }
+
+  document.querySelectorAll(".copy-install").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      copyText("npm install -g @deploid/cli");
+      var lbl = btn.querySelector(".install-label");
+      var prev = lbl ? lbl.textContent : null;
+      if (lbl){ lbl.textContent = "copied ✓"; setTimeout(function(){ lbl.textContent = prev || "copy"; }, 1400); }
+    });
+  });
+
+  $("#copy-active").addEventListener("click", function(){
+    copyText("deploid " + commands[active].cmd);
+    var self = this;
+    self.textContent = "copied ✓";
+    setTimeout(function(){ self.textContent = "copy"; }, 1400);
+  });
+
+  /* ---------- theme toggle ---------- */
+  var themeBtn = $("#themeBtn");
+  function applyTheme(t){
+    if (t === "paper") document.body.setAttribute("data-theme","paper");
+    else document.body.removeAttribute("data-theme");
+    themeBtn.textContent = t === "paper" ? "☾ dark" : "☀ paper";
+  }
+  var theme = "dark";
+  try { theme = localStorage.getItem("deploid-theme") || "dark"; } catch(e){}
+  applyTheme(theme);
+  themeBtn.addEventListener("click", function(){
+    theme = (theme === "paper") ? "dark" : "paper";
+    applyTheme(theme);
+    try { localStorage.setItem("deploid-theme", theme); } catch(e){}
+  });
+
+  /* ---------- hero typing animation ---------- */
+  var ghostCmds = ["deploid ship --patch --from-git","deploid doctor","deploid ci init github"];
+  var typedEl = $("#typed");
+  var ci = 0, pos = 0, dir = 1;
+  function tick(){
+    var full = ghostCmds[ci];
+    pos += dir;
+    typedEl.textContent = full.slice(0, pos);
+    var delay = dir > 0 ? 55 : 28;
+    if (pos >= full.length){ dir = -1; delay = 1600; }
+    else if (pos <= 0){ dir = 1; ci = (ci + 1) % ghostCmds.length; delay = 350; }
+    setTimeout(tick, delay);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>
