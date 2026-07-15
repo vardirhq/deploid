@@ -199,7 +199,7 @@ export const NetworkDebug = () => {
 ## Environment Setup
 
 ### Required Software:
-- Java 17+ (JDK; JAVA_HOME can be inferred from PATH)
+- Java 21 (LTS; JDK; JAVA_HOME can be inferred from PATH)
 - Android SDK (API 34)
 - Gradle 8.13
 - Node.js 18+

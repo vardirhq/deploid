@@ -860,7 +860,7 @@ function checkJavaHome(): CheckResult {
   if (!javaHome) {
     const javaPath = findExecutable('java');
     if (!javaPath) {
-      return fail('java-home', 'JAVA_HOME', 'JAVA_HOME is not set and java was not found on PATH.', ['build', 'release'], 'Install JDK 17+ or set JAVA_HOME to a valid JDK directory.');
+      return fail('java-home', 'JAVA_HOME', 'JAVA_HOME is not set and java was not found on PATH.', ['build', 'release'], 'Install JDK 21 (LTS) or set JAVA_HOME to a valid JDK directory.');
     }
     const inferred = inferJavaHome(javaPath);
     return inferred
@@ -875,7 +875,7 @@ function checkJavaHome(): CheckResult {
       'JAVA_HOME',
       `JAVA_HOME points to ${javaHome}, but its java executable is missing.`,
       ['build', 'release'],
-      javaPath ? `Fix JAVA_HOME or unset it so Deploid can use ${javaPath}.` : 'Set JAVA_HOME to a valid JDK 17+ directory.'
+      javaPath ? `Fix JAVA_HOME or unset it so Deploid can use ${javaPath}.` : 'Set JAVA_HOME to a valid JDK 21 (LTS) directory.'
     );
   }
 
@@ -885,13 +885,13 @@ function checkJavaHome(): CheckResult {
 function checkJava(): CheckResult {
   const result = spawnSync('java', ['-version'], { encoding: 'utf8' });
   if (result.status !== 0) {
-    return fail('java', 'Java', 'java is not available.', ['build', 'release'], result.error?.message || 'Install Java 17+ for Android builds.');
+    return fail('java', 'Java', 'java is not available.', ['build', 'release'], result.error?.message || 'Install Java 21 (LTS) for Android builds.');
   }
   const firstLine = `${result.stdout || ''} ${result.stderr || ''}`.trim().split('\n')[0]?.trim();
   const match = firstLine.match(/version "(\d+)/);
   const major = Number(match?.[1] || '0');
-  if (major > 0 && major < 17) {
-    return warn('java', 'Java', `Java ${major} is installed but Java 17+ is recommended.`, ['build', 'release'], firstLine);
+  if (major > 0 && major < 21) {
+    return fail('java', 'Java', `Java ${major} is installed but Deploid requires Java 21 (LTS).`, ['build', 'release'], `${firstLine} — the generated Android project targets Java 21 (sourceCompatibility/targetCompatibility VERSION_21) and will not compile on older JDKs. Install JDK 21.`);
   }
   return pass('java', 'Java', 'java is available.', ['build', 'release'], firstLine);
 }
