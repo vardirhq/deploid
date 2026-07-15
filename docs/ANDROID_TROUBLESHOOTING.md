@@ -54,7 +54,7 @@ deploid debug
 
 **Solution**:
 ```bash
-# Ensure Java 17+ is installed
+# Ensure Java 21 (LTS) is installed
 sudo pacman -S jdk21-openjdk
 
 # Set environment variables
@@ -123,7 +123,7 @@ npm run dev
 ## 🛠️ Environment Setup
 
 ### Required Software:
-- **Java 17+** (JDK) - `sudo pacman -S jdk21-openjdk`
+- **Java 21** (LTS, JDK) - `sudo pacman -S jdk21-openjdk`
 - **Android SDK** (API 34) - Install via Android Studio
 - **Gradle 8.13** - Auto-managed by Deploid
 - **Node.js 18+** - For web development
