@@ -4,6 +4,7 @@ import path from 'node:path';
 
 type PublishTarget = 'github' | 'play' | 'all';
 type BuildArtifactType = 'apk' | 'aab' | 'both';
+type PlayReleaseStatus = 'draft' | 'inProgress' | 'halted' | 'completed';
 
 interface PublishOptions {
   target?: PublishTarget;
@@ -32,7 +33,11 @@ interface PipelineContext {
       build?: { buildType?: BuildArtifactType };
     };
     publish?: {
-      play?: { track?: 'internal' | 'alpha' | 'beta' | 'production'; serviceAccountJson?: string };
+      play?: {
+        track?: 'internal' | 'alpha' | 'beta' | 'production';
+        status?: PlayReleaseStatus;
+        serviceAccountJson?: string;
+      };
       github?: { repo?: string; draft?: boolean };
     };
   };
@@ -230,6 +235,7 @@ function printDryRun(
   }
   if (details.targets.includes('play')) {
     ctx.logger.info(`play track: ${ctx.config.publish?.play?.track || 'internal'}`);
+    ctx.logger.info(`play status: ${ctx.config.publish?.play?.status || 'completed'}`);
   }
   ctx.logger.info(`notes preview: ${details.notes.split('\n').slice(0, 3).join(' | ')}`);
 }
@@ -343,6 +349,7 @@ async function publishPlay(
   const androidpublisher = google.androidpublisher({ version: 'v3', auth });
   const packageName = ctx.config.appId;
   const track = playConfig.track || 'internal';
+  const status = playConfig.status || 'completed';
 
   const editInsert = await androidpublisher.edits.insert({
     packageName,
@@ -385,7 +392,7 @@ async function publishPlay(
     track,
     requestBody: {
       releases: [{
-        status: 'completed',
+        status,
         versionCodes: [versionCode],
         releaseNotes: [{
           language: 'en-US',
@@ -400,7 +407,7 @@ async function publishPlay(
     editId
   });
 
-  ctx.logger.info(`Play publish complete: ${track} track, versionCode ${versionCode}`);
+  ctx.logger.info(`Play publish complete: ${track} track, ${status} release, versionCode ${versionCode}`);
 }
 
 function truncatePlayNotes(notes: string): string {
