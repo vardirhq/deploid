@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { inspectArtifacts, listAndroidDevices, loadConfigOptional, runDoctorCommand, runPluginCommand, type ArtifactRecord } from '@deploid/core';
+import { inspectArtifacts, listAndroidDevices, loadConfigOptional, runDoctorCommand, runPluginCommand, type ArtifactRecord } from '#core';
 
 interface DaemonOptions {
   host?: string;
