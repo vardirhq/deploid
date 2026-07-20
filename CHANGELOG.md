@@ -18,6 +18,7 @@
 ### Changed
 
 - Retired `@deploid/studio` as a public npm package; the private workspace now produces standalone desktop installers with an embedded CLI.
+- Prepared desktop version `2.0.8-beta.1` for the first cross-platform GitHub prerelease.
 - Changed `@deploid/cli` to the single user-facing distribution, with private core and built-in module output carried inside the package.
 - Changed Sharp and Google APIs back to normal npm dependencies so native packages are selected for the user's platform instead of being frozen into the release tarball.
 - Updated current documentation and the website to distinguish built-ins from optional and third-party integrations.
