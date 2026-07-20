@@ -3,633 +3,225 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Deploid Studio</title>
+    <meta name="color-scheme" content="dark" />
+    <title>Deploid</title>
     <style>
       :root {
-        --bg: #edf1ea;
-        --panel: rgba(255, 252, 246, 0.94);
-        --panel-strong: #fff8ea;
-        --line: rgba(39, 54, 40, 0.12);
-        --text: #182119;
-        --muted: #5f6c61;
-        --accent: #146f52;
-        --accent-strong: #0a5a41;
-        --gold: #b8872f;
-        --danger: #b33c29;
-        --warning: #d48a1f;
-        --shadow: 0 24px 60px rgba(36, 49, 37, 0.12);
-        --radius: 24px;
+        --bg: #0a0d0b;
+        --rail: #0d100e;
+        --surface: #111513;
+        --surface-raised: #151a17;
+        --surface-hover: #1a201c;
+        --line: #242a26;
+        --line-strong: #333b35;
+        --text: #f3f5f2;
+        --muted: #929b94;
+        --faint: #626a64;
+        --lime: #b7f20a;
+        --lime-soft: rgba(183, 242, 10, 0.12);
+        --amber: #ffb02e;
+        --cyan: #43c8e8;
+        --danger: #ff665f;
+        --radius: 12px;
       }
 
-      * {
-        box-sizing: border-box;
-      }
-
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
       body {
-        margin: 0;
-        min-height: 100vh;
         color: var(--text);
-        font-family: "Avenir Next", "Segoe UI", sans-serif;
-        background:
-          radial-gradient(circle at top left, rgba(20, 111, 82, 0.18), transparent 26%),
-          radial-gradient(circle at 80% 10%, rgba(184, 135, 47, 0.2), transparent 22%),
-          linear-gradient(160deg, #eef4ec 0%, #e7ece2 52%, #f5efe4 100%);
-      }
-
-      .wrap {
-        max-width: 1380px;
-        margin: 0 auto;
-        padding: 28px 24px 40px;
-      }
-
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(280px, 1.2fr) minmax(240px, 0.8fr);
-        gap: 18px;
-        margin-bottom: 18px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-      }
-
-      .hero-main {
-        padding: 28px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .hero-main::after {
-        content: "";
-        position: absolute;
-        inset: auto -40px -60px auto;
-        width: 220px;
-        height: 220px;
-        border-radius: 999px;
-        background: radial-gradient(circle, rgba(20, 111, 82, 0.18), transparent 70%);
-      }
-
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 12px;
-        border-radius: 999px;
-        background: rgba(20, 111, 82, 0.08);
-        color: var(--accent-strong);
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-      }
-
-      h1 {
-        margin: 14px 0 8px;
-        font-size: clamp(34px, 4vw, 52px);
-        line-height: 0.96;
-        letter-spacing: -0.04em;
-      }
-
-      .subhead {
-        max-width: 64ch;
-        color: var(--muted);
-        font-size: 15px;
-        line-height: 1.5;
-      }
-
-      .hero-meta {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 22px;
-      }
-
-      .meta-card {
-        padding: 14px 16px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.66);
-        border: 1px solid rgba(39, 54, 40, 0.08);
-      }
-
-      .meta-label {
-        color: var(--muted);
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .meta-value {
-        margin-top: 6px;
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-      }
-
-      .hero-side {
-        display: grid;
-        gap: 18px;
-      }
-
-      .status-panel,
-      .picker-panel {
-        padding: 22px;
-      }
-
-      .status-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(20, 111, 82, 0.1);
-        color: var(--accent-strong);
-        font-weight: 700;
-        font-size: 13px;
-      }
-
-      .status-chip.running {
-        background: rgba(212, 138, 31, 0.12);
-        color: #85540a;
-      }
-
-      .status-chip.error {
-        background: rgba(179, 60, 41, 0.12);
-        color: #8f2b1c;
-      }
-
-      .status-panel h2,
-      .picker-panel h2,
-      .section-header h2 {
-        margin: 12px 0 6px;
-        font-size: 18px;
-      }
-
-      .status-note,
-      .panel-copy {
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.45;
-      }
-
-      .picker-row,
-      .action-row,
-      .toolbar {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-
-      .picker-row {
-        margin-top: 14px;
-      }
-
-      input,
-      select,
-      button {
-        border-radius: 14px;
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.92);
-        color: var(--text);
-        font-size: 14px;
-      }
-
-      input,
-      select {
-        padding: 12px 14px;
-      }
-
-      input {
-        flex: 1;
-        min-width: 220px;
-      }
-
-      button {
-        padding: 11px 14px;
-        cursor: pointer;
-        transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
-      }
-
-      button:hover {
-        transform: translateY(-1px);
-      }
-
-      button.primary {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent-strong);
-        font-weight: 700;
-      }
-
-      button.primary:hover {
-        background: var(--accent-strong);
-      }
-
-      button.ghost {
-        background: rgba(255, 255, 255, 0.74);
-      }
-
-      button:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .recents {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 12px;
-      }
-
-      .recent-pill {
-        padding: 8px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-      }
-
-      .main-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.8fr);
-        gap: 18px;
-      }
-
-      .stack {
-        display: grid;
-        gap: 18px;
-      }
-
-      .section {
-        padding: 22px;
-      }
-
-      .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: end;
-        gap: 12px;
-        margin-bottom: 14px;
-      }
-
-      .workflow-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-      }
-
-      .workflow-card {
-        padding: 16px;
-        border-radius: 20px;
-        border: 1px solid rgba(39, 54, 40, 0.08);
-        background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247, 243, 234, 0.92));
-      }
-
-      .workflow-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: start;
-      }
-
-      .workflow-name {
-        font-size: 16px;
-        font-weight: 700;
-      }
-
-      .workflow-score {
-        font-size: 28px;
-        font-weight: 800;
-        letter-spacing: -0.04em;
-      }
-
-      .workflow-state {
-        margin-top: 10px;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
-
-      .workflow-note {
-        margin-top: 8px;
-        min-height: 42px;
-        color: var(--muted);
-        font-size: 13px;
-        line-height: 1.4;
-      }
-
-      .workflow-action {
-        margin-top: 14px;
-        width: 100%;
-      }
-
-      .list {
-        display: grid;
-        gap: 10px;
-      }
-
-      .list-item {
-        display: grid;
-        gap: 6px;
-        padding: 14px 16px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.84);
-        border: 1px solid rgba(39, 54, 40, 0.08);
-      }
-
-      .list-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: start;
-      }
-
-      .list-title {
-        font-weight: 700;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 9px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .badge.fail {
-        background: rgba(179, 60, 41, 0.12);
-        color: var(--danger);
-      }
-
-      .badge.warn {
-        background: rgba(212, 138, 31, 0.14);
-        color: var(--warning);
-      }
-
-      .badge.pass {
-        background: rgba(20, 111, 82, 0.1);
-        color: var(--accent-strong);
-      }
-
-      .artifact-path,
-      .device-line {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 12px;
-        color: var(--muted);
-        word-break: break-all;
-      }
-
-      .quick-grid {
-        display: grid;
-        gap: 10px;
-      }
-
-      .quick-action {
-        padding: 16px;
-        border-radius: 20px;
-        background: linear-gradient(145deg, rgba(15, 111, 82, 0.95), rgba(10, 71, 55, 0.98));
-        color: #f6faf7;
-        border: 0;
-        text-align: left;
-      }
-
-      .quick-action small {
-        display: block;
-        margin-top: 6px;
-        color: rgba(246, 250, 247, 0.72);
-        font-size: 12px;
-      }
-
-      .activity {
-        background: #0d1613;
-        color: #dff7e9;
-      }
-
-      #logs {
-        height: 320px;
-        overflow: auto;
-        padding: 16px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(223, 247, 233, 0.1);
-        white-space: pre-wrap;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 12px;
-      }
-
-      .activity .panel-copy,
-      .activity .section-header h2,
-      .activity .status-note {
-        color: #dff7e9;
-      }
-
-      .toolbar select,
-      .toolbar button {
-        background: rgba(255, 255, 255, 0.08);
-        color: #effaf4;
-        border-color: rgba(255, 255, 255, 0.14);
-      }
-
-      .empty {
-        padding: 18px;
-        border-radius: 18px;
-        border: 1px dashed rgba(39, 54, 40, 0.16);
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .subgrid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
-      }
-
-      @media (max-width: 1160px) {
-        .hero,
-        .main-grid,
-        .subgrid {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 720px) {
-        .wrap {
-          padding: 18px 14px 28px;
-        }
-
-        .hero-main,
-        .status-panel,
-        .picker-panel,
-        .section {
-          padding: 18px;
-        }
-
-        .hero-meta,
-        .workflow-grid {
-          grid-template-columns: 1fr;
-        }
+        background: var(--bg);
+        font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button { font: inherit; }
+      button:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+
+      .app { display: grid; grid-template-columns: 250px minmax(620px, 1fr) 320px; height: 100vh; }
+      .sidebar { display: flex; flex-direction: column; min-width: 0; background: var(--rail); border-right: 1px solid var(--line); }
+      .brand { display: flex; align-items: center; gap: 12px; height: 80px; padding: 0 22px; border-bottom: 1px solid var(--line); font-size: 21px; font-weight: 750; letter-spacing: -0.03em; }
+      .brand-mark { position: relative; width: 30px; height: 30px; transform: rotate(-30deg); }
+      .brand-mark::before, .brand-mark::after { content: ""; position: absolute; inset: 3px; border: 3px solid var(--lime); border-radius: 3px; }
+      .brand-mark::after { inset: 10px -2px -2px 10px; background: var(--rail); }
+      .section-label { padding: 24px 22px 10px; color: var(--faint); font-size: 10px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+      .projects { display: grid; gap: 3px; padding: 0 10px; }
+      .project-button { display: grid; grid-template-columns: 28px minmax(0,1fr) 8px; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 9px; text-align: left; cursor: pointer; }
+      .project-button:hover { color: var(--text); background: var(--surface); }
+      .project-button.active { color: var(--text); background: var(--surface-hover); border-color: var(--line); box-shadow: inset 3px 0 var(--lime); }
+      .project-icon { display: grid; place-items: center; width: 27px; height: 27px; color: var(--lime); background: var(--lime-soft); border: 1px solid rgba(183,242,10,.24); border-radius: 7px; font-size: 12px; font-weight: 800; }
+      .project-copy { min-width: 0; }
+      .project-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 620; }
+      .project-path { overflow: hidden; margin-top: 1px; color: var(--faint); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+      .project-dot { width: 6px; height: 6px; background: var(--faint); border-radius: 50%; }
+      .active .project-dot { background: var(--lime); box-shadow: 0 0 12px var(--lime); }
+      .add-project { margin: 10px 20px; padding: 9px 0; color: var(--muted); background: transparent; border: 0; text-align: left; cursor: pointer; }
+      .add-project:hover { color: var(--text); }
+      .sidebar-footer { margin-top: auto; padding: 16px 20px 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11px; }
+      .cli-state { display: flex; align-items: center; gap: 8px; margin-top: 13px; color: var(--muted); }
+      .cli-state::before { content: ""; width: 7px; height: 7px; background: var(--lime); border-radius: 50%; }
+
+      .workspace { min-width: 0; display: grid; grid-template-rows: 80px minmax(0, 1fr) 248px; background: radial-gradient(circle at 70% -10%, rgba(183,242,10,.035), transparent 34%), var(--bg); }
+      .project-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 30px; border-bottom: 1px solid var(--line); }
+      .project-heading { min-width: 0; }
+      .project-heading h1 { margin: 0; font-size: 20px; font-weight: 720; letter-spacing: -.025em; }
+      .project-heading p { overflow: hidden; margin: 3px 0 0; color: var(--muted); font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
+      .header-actions { display: flex; gap: 8px; }
+      .ghost-button, .icon-button { color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+      .ghost-button { padding: 8px 12px; }
+      .ghost-button:hover, .icon-button:hover { color: var(--text); border-color: var(--line-strong); }
+      .icon-button { width: 34px; height: 34px; }
+
+      .content { min-height: 0; overflow: auto; padding: 24px 30px 30px; }
+      .readiness { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
+      .readiness-copy { display: flex; align-items: center; gap: 14px; }
+      .readiness-icon { display: grid; place-items: center; width: 46px; height: 46px; color: var(--lime); background: var(--lime-soft); border: 1px solid rgba(183,242,10,.34); border-radius: 50%; font-size: 20px; }
+      .readiness h2 { margin: 0; font-size: 21px; letter-spacing: -.03em; }
+      .readiness p { margin: 3px 0 0; color: var(--muted); }
+      .readiness strong { color: var(--lime); }
+      .status-pill { padding: 7px 10px; color: var(--lime); background: var(--lime-soft); border: 1px solid rgba(183,242,10,.22); border-radius: 99px; font-size: 11px; font-weight: 700; }
+      .status-pill.warn { color: var(--amber); background: rgba(255,176,46,.1); border-color: rgba(255,176,46,.25); }
+
+      .pipeline { display: grid; grid-template-columns: repeat(4,1fr); margin-bottom: 20px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+      .stage { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 18px; }
+      .stage:not(:last-child)::after { content: ""; position: absolute; top: 18px; right: 6px; width: calc(100% - 110px); min-width: 18px; border-top: 1px dashed var(--line-strong); transform: translateX(50%); }
+      .stage-badge { z-index: 1; display: grid; place-items: center; flex: 0 0 auto; width: 36px; height: 36px; color: var(--muted); background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 50%; }
+      .stage.complete .stage-badge, .stage.ready .stage-badge { color: var(--lime); border-color: rgba(183,242,10,.45); }
+      .stage.blocked .stage-badge { color: var(--amber); border-color: rgba(255,176,46,.45); }
+      .stage-title { font-weight: 650; }
+      .stage-state { color: var(--faint); font-size: 11px; }
+      .stage.blocked .stage-state { color: var(--amber); }
+
+      .target-list { display: grid; gap: 10px; }
+      .target-card { display: grid; grid-template-columns: minmax(145px,.8fr) minmax(170px,1fr) minmax(130px,.65fr) 88px; align-items: center; gap: 18px; min-height: 84px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+      .target-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .target-logo { display: grid; place-items: center; flex: 0 0 auto; width: 40px; height: 40px; color: var(--lime); background: var(--surface-raised); border: 1px solid var(--line); border-radius: 8px; font-size: 19px; }
+      .target-name { font-size: 15px; font-weight: 650; }
+      .target-subtitle, .cell-label { color: var(--faint); font-size: 10px; }
+      .cell-value { overflow: hidden; margin-top: 4px; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .target-status { display: flex; align-items: center; gap: 7px; color: var(--lime); font-size: 12px; }
+      .target-status.warn { color: var(--amber); }
+      .target-status::before { content: ""; width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+
+      .bottom-panel { min-height: 0; border-top: 1px solid var(--line); background: #0c100d; }
+      .tabs { display: flex; align-items: center; height: 48px; padding: 0 26px; border-bottom: 1px solid var(--line); }
+      .tab { position: relative; height: 48px; padding: 0 12px; color: var(--faint); background: transparent; border: 0; cursor: pointer; }
+      .tab.active { color: var(--text); }
+      .tab.active::after { content: ""; position: absolute; right: 10px; bottom: -1px; left: 10px; height: 2px; background: var(--lime); }
+      .tab-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+      .tab-tools button { padding: 6px 8px; color: var(--faint); background: transparent; border: 0; cursor: pointer; }
+      .panel-view { display: none; height: 199px; overflow: auto; padding: 12px 30px 20px; }
+      .panel-view.active { display: block; }
+      .log-line { display: grid; grid-template-columns: 76px 74px 1fr; gap: 12px; padding: 3px 0; color: var(--muted); font: 11px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .log-time { color: var(--faint); }
+      .log-kind { color: var(--cyan); font-weight: 700; }
+      .log-line.stderr .log-kind, .log-line.stderr .log-message { color: var(--amber); }
+      .log-line.system .log-kind { color: var(--lime); }
+      .data-row { display: grid; grid-template-columns: minmax(140px,.5fr) 1fr auto; gap: 18px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+      .data-row strong { color: var(--text); }
+
+      .action-panel { display: flex; flex-direction: column; min-width: 0; padding: 27px 24px; background: var(--rail); border-left: 1px solid var(--line); }
+      .action-kicker { color: var(--lime); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .action-panel h2 { margin: 12px 0 8px; font-size: 20px; letter-spacing: -.025em; }
+      .action-panel > p { margin: 0; color: var(--muted); font-size: 12px; }
+      .command-label { margin: 28px 0 8px; color: var(--faint); font-size: 10px; text-transform: uppercase; }
+      .command-box { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 11px; background: #090c0a; border: 1px solid var(--line-strong); border-radius: 8px; }
+      .command-box code { overflow: hidden; flex: 1; color: var(--lime); font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
+      .command-box button { color: var(--muted); background: transparent; border: 0; cursor: pointer; }
+      .action-summary { display: grid; gap: 14px; margin-top: 26px; }
+      .summary-row { display: grid; grid-template-columns: 21px 1fr auto; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+      .summary-icon { display: grid; place-items: center; width: 18px; height: 18px; color: var(--faint); border: 1px solid var(--line-strong); border-radius: 50%; font-size: 9px; }
+      .summary-row.done .summary-icon { color: var(--lime); border-color: rgba(183,242,10,.4); }
+      .summary-row.blocked .summary-icon { color: var(--amber); border-color: rgba(255,176,46,.4); }
+      .summary-state { color: var(--faint); }
+      .summary-row.done .summary-state { color: var(--lime); }
+      .summary-row.blocked .summary-state { color: var(--amber); }
+      .blocker { margin-top: 26px; padding: 12px; color: var(--muted); background: rgba(255,176,46,.07); border: 1px solid rgba(255,176,46,.18); border-radius: 9px; font-size: 11px; }
+      .blocker strong { display: block; margin-bottom: 3px; color: var(--amber); }
+      .run-button { width: 100%; margin-top: auto; padding: 13px 15px; color: #111500; background: var(--lime); border: 0; border-radius: 8px; font-weight: 800; cursor: pointer; }
+      .run-button:hover { background: #c7ff20; }
+      .run-button:disabled { opacity: .5; cursor: not-allowed; }
+      .stop-button { width: 100%; margin-top: 8px; padding: 10px 15px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+      .stop-button:disabled { display: none; }
+      .empty-state { padding: 18px; color: var(--faint); border: 1px dashed var(--line-strong); border-radius: 9px; font-size: 12px; }
+      .toast { position: fixed; right: 338px; bottom: 264px; z-index: 3; padding: 9px 12px; color: var(--text); background: var(--surface-hover); border: 1px solid var(--line-strong); border-radius: 8px; opacity: 0; transform: translateY(6px); transition: .18s ease; pointer-events: none; }
+      .toast.show { opacity: 1; transform: none; }
+
+      @media (max-width: 1220px) {
+        .app { grid-template-columns: 210px minmax(600px,1fr) 280px; }
+        .target-card { grid-template-columns: minmax(140px,.9fr) 1fr minmax(115px,.7fr); }
+        .target-card > button { display: none; }
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <section class="hero">
-        <div class="panel hero-main">
-          <div class="eyebrow">Release Control</div>
-          <h1 id="projectTitle">Deploid Studio</h1>
-          <p id="projectSubtitle" class="subhead">
-            Studio now starts from readiness, blockers, and release momentum instead of asking you to think in raw commands.
-          </p>
-          <div class="hero-meta">
-            <div class="meta-card">
-              <div class="meta-label">Overall Status</div>
-              <div id="metaStatus" class="meta-value">No project</div>
-            </div>
-            <div class="meta-card">
-              <div class="meta-label">Artifacts</div>
-              <div id="metaArtifacts" class="meta-value">0</div>
-            </div>
-            <div class="meta-card">
-              <div class="meta-label">Devices</div>
-              <div id="metaDevices" class="meta-value">0</div>
-            </div>
-          </div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Deploid</span></div>
+        <div class="section-label">Projects</div>
+        <div id="projectList" class="projects"></div>
+        <button id="addProject" class="add-project" type="button">＋ Add project</button>
+        <div class="sidebar-footer">
+          <div>Standalone desktop client</div>
+          <div class="cli-state">Bundled Deploid CLI</div>
         </div>
+      </aside>
 
-        <div class="hero-side">
-          <div class="panel status-panel">
-            <div id="statusPill" class="status-chip">Ready</div>
-            <h2 id="runStateTitle">No task running</h2>
-            <p id="status" class="status-note">Choose a project and Studio will pull readiness, blockers, and quick actions automatically.</p>
-            <div class="action-row" style="margin-top: 16px;">
-              <button id="run" class="primary">Run Selected Action</button>
-              <button id="stop" class="ghost">Stop</button>
-            </div>
+      <main class="workspace">
+        <header class="project-header">
+          <div class="project-heading">
+            <h1 id="projectTitle">Choose a project</h1>
+            <p id="projectPath">Add a project folder to begin</p>
           </div>
-
-          <div class="panel picker-panel">
-            <h2>Project Focus</h2>
-            <p class="panel-copy">Pick the folder you want to inspect and ship.</p>
-            <div class="picker-row">
-              <input id="cwd" type="text" placeholder="Select your project folder..." />
-              <button id="pick" class="ghost">Browse</button>
-            </div>
-            <div id="recentWrap" class="recents"></div>
+          <div class="header-actions">
+            <button id="refresh" class="icon-button" type="button" title="Refresh project">↻</button>
+            <button id="changeProject" class="ghost-button" type="button">Change folder</button>
           </div>
-        </div>
-      </section>
+        </header>
 
-      <section class="main-grid">
-        <div class="stack">
-          <div class="panel section">
-            <div class="section-header">
+        <section class="content">
+          <div class="readiness">
+            <div class="readiness-copy">
+              <div id="readinessIcon" class="readiness-icon">✓</div>
               <div>
-                <h2>Workflow Board</h2>
-                <p class="panel-copy">Each lane shows readiness and the next meaningful action, not just a command list.</p>
+                <h2>Release readiness</h2>
+                <p id="readinessText"><strong>0 of 0</strong> checks passed</p>
               </div>
             </div>
-            <div id="workflowGrid" class="workflow-grid"></div>
+            <span id="healthPill" class="status-pill warn">No project</span>
           </div>
 
-          <div class="subgrid">
-            <div class="panel section">
-              <div class="section-header">
-                <div>
-                  <h2>Blockers & Warnings</h2>
-                  <p class="panel-copy">What is actually stopping you from shipping right now.</p>
-                </div>
-              </div>
-              <div id="blockersList" class="list"></div>
-            </div>
+          <div id="pipeline" class="pipeline"></div>
+          <div id="targetList" class="target-list"></div>
+        </section>
 
-            <div class="panel section">
-              <div class="section-header">
-                <div>
-                  <h2>Quick Actions</h2>
-                  <p class="panel-copy">Opinionated next moves based on the current project state.</p>
-                </div>
-              </div>
-              <div id="quickActions" class="quick-grid"></div>
-              <input id="cmd" type="hidden" value="doctor --summary" />
+        <section class="bottom-panel">
+          <div class="tabs">
+            <button class="tab active" data-tab="activity" type="button">Activity</button>
+            <button class="tab" data-tab="artifacts" type="button">Artifacts</button>
+            <button class="tab" data-tab="devices" type="button">Devices</button>
+            <div class="tab-tools">
+              <button id="copyLogs" type="button">Copy</button>
+              <button id="clearLogs" type="button">Clear</button>
             </div>
           </div>
+          <div id="activityView" class="panel-view active"></div>
+          <div id="artifactsView" class="panel-view"></div>
+          <div id="devicesView" class="panel-view"></div>
+        </section>
+      </main>
 
-          <div class="subgrid">
-            <div class="panel section">
-              <div class="section-header">
-                <div>
-                  <h2>Artifacts</h2>
-                  <p class="panel-copy">Latest build outputs that Studio can see in the selected project.</p>
-                </div>
-              </div>
-              <div id="artifactsList" class="list"></div>
-            </div>
-
-            <div class="panel section">
-              <div class="section-header">
-                <div>
-                  <h2>Devices & Surface</h2>
-                  <p class="panel-copy">Connected Android targets plus packaging surface already present in the project.</p>
-                </div>
-              </div>
-              <div id="devicesList" class="list"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="stack">
-          <div class="panel section activity">
-            <div class="section-header">
-              <div>
-                <h2>Activity</h2>
-                <p class="panel-copy">Raw output is still here, but it’s no longer the whole product.</p>
-              </div>
-              <div class="toolbar">
-                <select id="logFilter">
-                  <option value="all">All output</option>
-                  <option value="stdout">Standard output</option>
-                  <option value="stderr">Errors only</option>
-                  <option value="system">System messages</option>
-                </select>
-                <button id="copyLogs" class="ghost">Copy</button>
-                <button id="clearLogs" class="ghost">Clear</button>
-              </div>
-            </div>
-            <div id="logs"></div>
-          </div>
-
-          <div class="panel section">
-            <div class="section-header">
-              <div>
-                <h2>Session Pulse</h2>
-                <p class="panel-copy">A minimal run summary for the current Studio session.</p>
-              </div>
-            </div>
-            <div class="hero-meta">
-              <div class="meta-card">
-                <div class="meta-label">Selected Action</div>
-                <div id="kpiTask" class="meta-value">doctor --summary</div>
-              </div>
-              <div class="meta-card">
-                <div class="meta-label">Runs This Session</div>
-                <div id="kpiRuns" class="meta-value">0</div>
-              </div>
-              <div class="meta-card">
-                <div class="meta-label">Last Result</div>
-                <div id="kpiResult" class="meta-value">Idle</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <aside class="action-panel">
+        <div class="action-kicker">Next action</div>
+        <h2 id="actionTitle">Inspect project</h2>
+        <p id="actionDescription">Run Deploid Doctor to find blockers and prepare the safest next command.</p>
+        <div class="command-label">CLI command</div>
+        <div class="command-box"><code id="commandText">deploid doctor --summary</code><button id="copyCommand" type="button" title="Copy command">▣</button></div>
+        <div id="actionSummary" class="action-summary"></div>
+        <div id="blocker" class="blocker"><strong>Waiting for project</strong>Add a project folder to calculate release readiness.</div>
+        <button id="run" class="run-button" type="button">▶ Run doctor</button>
+        <button id="stop" class="stop-button" type="button" disabled>Stop command</button>
+      </aside>
     </div>
+    <div id="toast" class="toast" role="status"></div>
     <script src="./renderer.js"></script>
   </body>
 </html>

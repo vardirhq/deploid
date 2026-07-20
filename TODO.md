@@ -39,6 +39,13 @@
 - [x] Add visual polish pass with iconography and branded empty/success/error states.
 - [x] Rebuild Studio around readiness, blockers, artifacts, devices, and quick actions instead of command-launcher UX.
 
+## Standalone Deploid Desktop
+- [x] Retire Studio as a public npm distribution and keep the workspace private.
+- [x] Rebuild the desktop interface around release readiness and explicit CLI actions.
+- [x] Bundle the CLI runtime instead of requiring a global npm installation.
+- [x] Add native AppImage/DEB, DMG/ZIP, and NSIS/portable packaging targets.
+- [x] Add native-platform GitHub Actions builds for downloadable desktop artifacts.
+
 ## Compatibility Follow-ups
 - [x] Fix `@deploid/plugin-storage` peer compatibility for Capacitor 8 projects.
 - [x] Make `deploid init` install required plugins even if optional plugin install fails.

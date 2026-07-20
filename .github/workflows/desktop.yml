@@ -1,0 +1,88 @@
+name: Desktop
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/desktop.yml'
+      - 'packages/studio/**'
+      - 'packages/cli/**'
+      - 'packages/core/**'
+      - 'packages/plugins/**'
+      - 'pnpm-lock.yaml'
+  push:
+    tags:
+      - 'studio-v*'
+  workflow_dispatch:
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            script: dist:linux
+          - os: macos-latest
+            script: dist:mac
+          - os: windows-latest
+            script: dist:windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build workspace
+        run: pnpm -r build
+      - name: Package desktop app
+        run: pnpm --filter @deploid/studio ${{ matrix.script }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate bundled CLI
+        working-directory: packages/studio
+        run: node scripts/validate-package.mjs release
+      - name: Capture implementation preview
+        if: runner.os == 'Linux'
+        run: |
+          xvfb-run -a env \
+            DEPLOID_STUDIO_SCREENSHOT_PATH="$GITHUB_WORKSPACE/packages/studio/release/studio-preview.png" \
+            DEPLOID_STUDIO_LAUNCH_CWD="$GITHUB_WORKSPACE" \
+            pnpm --filter @deploid/studio exec electron dist/main.js --no-sandbox
+      - name: Upload desktop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploid-${{ runner.os }}
+          path: |
+            packages/studio/release/*.AppImage
+            packages/studio/release/*.deb
+            packages/studio/release/*.dmg
+            packages/studio/release/*.zip
+            packages/studio/release/*.exe
+            packages/studio/release/*.png
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/studio-v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" artifacts/* --generate-notes --title "Deploid ${{ github.ref_name }}"
