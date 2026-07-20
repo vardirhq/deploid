@@ -8,7 +8,7 @@ Deploid is modular in the repository and monolithic at the npm distribution boun
 - `packages/core` is a private workspace containing configuration, pipelines, logging, and loading.
 - `packages/plugins/*` contains private built-in workflow modules.
 - `@deploid/plugin-storage` is public because it runs inside consumer applications.
-- Deploid Studio has an independent package lifecycle.
+- The legacy Studio prototype is a private workspace and is not published to npm.
 
 During `@deploid/cli` build, compiled core and built-in output is copied into
 `dist/internal`. Third-party libraries such as Sharp and Google APIs remain normal
@@ -41,7 +41,7 @@ packages/
   cli/                 public npm distribution
   core/                private runtime workspace
   plugins/             private built-ins plus public storage integration
-  studio/              separately distributed desktop application
+  studio/              private legacy GUI prototype
 ```
 
 ## Design rules
@@ -51,3 +51,4 @@ packages/
 3. Native and third-party dependencies are installed normally by npm.
 4. Custom plugins depend on the public `@deploid/cli` contract.
 5. Release validation must install the packed tarball and exercise both CLI and API.
+6. A future GUI is a standalone desktop release that drives the CLI or its local API.
