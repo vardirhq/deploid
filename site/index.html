@@ -89,6 +89,7 @@
       <a href="#features" class="nav-link">features</a>
       <a href="#commands" class="nav-link">commands</a>
       <a href="#ship" class="nav-link">ship</a>
+      <a href="#changelog" class="nav-link">changelog</a>
       <a href="#install" class="nav-link">install</a>
     </div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
@@ -330,6 +331,20 @@
   </div>
 </section>
 
+<!-- ===== CHANGELOG ===== -->
+<section id="changelog" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div style="display:flex;align-items:end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:20px">
+    <div>
+      <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## WHAT'S NEW</div>
+      <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0">Latest changes, straight from the changelog.</h2>
+    </div>
+    <a href="https://github.com/vardirhq/deploid/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="btn-secondary" style="font-size:13px;padding:10px 14px;border:1px solid var(--border-strong);border-radius:9px;color:var(--ink)">Full changelog →</a>
+  </div>
+  <div id="changelog-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+    <div style="border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px;color:var(--muted)">Loading recent changes…</div>
+  </div>
+</section>
+
 <!-- ===== INSTALL / CTA ===== -->
 <section id="install" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 30px;position:relative;z-index:1">
   <div style="border-radius:16px;border:1px solid rgba(139,157,255,.22);background:radial-gradient(600px 260px at 50% 0%,rgba(139,157,255,.12),transparent),var(--panel);padding:44px 28px;text-align:center;box-shadow:var(--cta-glow)">
@@ -519,6 +534,44 @@
     setCopyLabel($("#copy-active"), "copy");
   }
   setActive(0);
+
+  /* ---------- changelog ---------- */
+  function renderChangelog(markdown){
+    var sections = [];
+    var current = null;
+    var category = '';
+    markdown.split(/\r?\n/).forEach(function(line){
+      if (/^##\s+/.test(line)){
+        if (sections.length >= 2) return;
+        current = { title: line.replace(/^##\s+/, ''), items: [] };
+        sections.push(current);
+        category = '';
+      } else if (current && /^###\s+/.test(line)){
+        category = line.replace(/^###\s+/, '');
+      } else if (current && /^-\s+/.test(line) && current.items.length < 6){
+        current.items.push({ category: category, text: line.replace(/^-\s+/, '').replace(/`/g, '') });
+      }
+    });
+    var grid = $("#changelog-grid");
+    grid.innerHTML = '';
+    sections.filter(function(section){ return section.items.length; }).forEach(function(section){
+      var card = el('article', { style:'border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px;box-shadow:var(--shadow-panel)' });
+      card.appendChild(el('div', { style:'font-size:12px;color:var(--accent);font-weight:700;margin-bottom:12px' }, esc(section.title)));
+      section.items.forEach(function(item){
+        var label = item.category ? '<span style="color:var(--green);font-size:10px;letter-spacing:.5px">'+esc(item.category.toUpperCase())+'</span> ' : '';
+        card.appendChild(el('div', { style:'font-size:12.5px;line-height:1.55;color:var(--muted);margin-top:9px' }, label + esc(item.text)));
+      });
+      grid.appendChild(card);
+    });
+    if (!grid.children.length) throw new Error('No changelog entries found');
+  }
+  fetch('https://raw.githubusercontent.com/vardirhq/deploid/main/CHANGELOG.md')
+    .then(function(response){ if (!response.ok) throw new Error('Changelog unavailable'); return response.text(); })
+    .then(renderChangelog)
+    .catch(function(){
+      var grid = $("#changelog-grid");
+      grid.innerHTML = '<div style="border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px;color:var(--muted)">Recent changes could not be loaded. <a href="https://github.com/vardirhq/deploid/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Open the full changelog →</a></div>';
+    });
 
   /* ---------- copy buttons ---------- */
   function copyText(t){ try { navigator.clipboard.writeText(t); } catch(e){} }
