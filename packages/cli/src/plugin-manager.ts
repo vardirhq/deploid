@@ -93,6 +93,23 @@ const availablePlugins = {
   }
 };
 
+const bundledPluginKeys = new Set([
+  'assets',
+  'artifacts',
+  'packaging-capacitor',
+  'packaging-electron',
+  'build-android',
+  'deploy-android',
+  'prepare-ios',
+  'debug-network',
+  'doctor',
+  'release-init',
+  'publish',
+  'version',
+  'changelog',
+  'ci-init'
+]);
+
 export async function managePlugins(options: PluginManagerOptions): Promise<void> {
   const cwd = process.cwd();
 
@@ -126,8 +143,9 @@ async function listPlugins(cwd: string): Promise<void> {
   console.log('📦 Available Deploid Plugins:\n');
   
   for (const [key, plugin] of Object.entries(availablePlugins)) {
-    const isInstalled = await isPluginInstalled(cwd, plugin.name);
-    const status = isInstalled ? '✅ Installed' : '⏸️  Not installed';
+    const isBundled = bundledPluginKeys.has(key);
+    const isInstalled = isBundled || await isPluginInstalled(cwd, plugin.name);
+    const status = isBundled ? '✅ Built in' : isInstalled ? '✅ Installed' : '⏸️  Not installed';
     const required = plugin.required ? ' (Required)' : '';
     
     console.log(`${status} ${plugin.description}${required}`);
@@ -148,6 +166,11 @@ async function installPlugin(cwd: string, pluginKey: string): Promise<void> {
     console.error(`❌ Unknown plugin: ${pluginKey}`);
     console.log('Available plugins:', Object.keys(availablePlugins).join(', '));
     process.exit(1);
+  }
+
+  if (bundledPluginKeys.has(pluginKey)) {
+    console.log(`✅ ${plugin.description} is built into @deploid/cli`);
+    return;
   }
 
   if (await isPluginInstalled(cwd, plugin.name)) {
@@ -188,8 +211,8 @@ async function removePlugin(cwd: string, pluginKey: string): Promise<void> {
     process.exit(1);
   }
 
-  if (plugin.required) {
-    console.error(`❌ Cannot remove required plugin: ${plugin.description}`);
+  if (plugin.required || bundledPluginKeys.has(pluginKey)) {
+    console.error(`❌ ${plugin.description} is built into @deploid/cli and cannot be removed`);
     process.exit(1);
   }
 
@@ -261,7 +284,7 @@ async function interactiveInstall(cwd: string, rl: any): Promise<void> {
   console.log('\n📦 Available plugins to install:\n');
   
   const allPlugins = Object.entries(availablePlugins)
-    .filter(([key, plugin]) => !plugin.required);
+    .filter(([key, plugin]) => !plugin.required && !bundledPluginKeys.has(key));
   
   const installablePlugins = [];
   for (let i = 0; i < allPlugins.length; i++) {
@@ -310,7 +333,7 @@ async function interactiveRemove(cwd: string, rl: any): Promise<void> {
   console.log('\n🗑️  Installed plugins you can remove:\n');
   
   const allPlugins = Object.entries(availablePlugins)
-    .filter(([key, plugin]) => !plugin.required);
+    .filter(([key, plugin]) => !plugin.required && !bundledPluginKeys.has(key));
   
   const removablePlugins = [];
   for (let i = 0; i < allPlugins.length; i++) {
