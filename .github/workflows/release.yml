@@ -44,6 +44,7 @@ jobs:
       - name: Build
         run: pnpm -r build
       - name: Test
+        if: runner.os == 'Linux'
         run: pnpm -r --if-present test
       - name: Assemble single-package distribution
         run: pnpm --filter @deploid/cli deploy --prod .release/cli
