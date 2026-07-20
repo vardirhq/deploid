@@ -45,9 +45,16 @@ jobs:
         run: pnpm --filter @deploid/cli deploy --prod .release/cli
       - name: Derive release version
         run: node scripts/prepare-release.mjs .release/cli
-      - name: Inspect npm tarball
+      - name: Pack and inspect npm tarball
         working-directory: .release/cli
-        run: npm pack --dry-run
+        run: |
+          mkdir -p ../artifacts
+          pnpm pack --pack-destination ../artifacts
+          tarball=$(find ../artifacts -name '*.tgz' -print -quit)
+          tar -tzf "$tarball" > ../tarball-contents.txt
+          grep -q 'package/node_modules/@deploid/core/' ../tarball-contents.txt
+          grep -q 'package/node_modules/@deploid/plugin-assets/' ../tarball-contents.txt
+          grep -q 'package/node_modules/@deploid/plugin-publish/' ../tarball-contents.txt
 
   publish:
     if: >-
@@ -81,9 +88,13 @@ jobs:
       - name: Derive release version
         id: release
         run: echo "version=$(node scripts/prepare-release.mjs .release/cli)" >> "$GITHUB_OUTPUT"
-      - name: Publish to npm with provenance
+      - name: Pack release tarball
         working-directory: .release/cli
-        run: npm publish --access public --provenance
+        run: |
+          mkdir -p ../artifacts
+          pnpm pack --pack-destination ../artifacts
+      - name: Publish to npm with provenance
+        run: npm publish .release/artifacts/*.tgz --access public --provenance
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
