@@ -74,7 +74,7 @@ function sendLog(kind: 'stdout' | 'stderr' | 'system', message: string): void {
 
 function resolveCliEntrypoint(): string {
   const configured = process.env.DEPLOID_CLI_PATH;
-  const resolved = configured ? resolve(configured) : require.resolve('@deploid/cli/dist/index.js');
+  const resolved = configured ? resolve(configured) : require.resolve('@deploid/cli');
   if (app.isPackaged) {
     const unpacked = resolved.replace(`${join('app.asar', '')}`, `${join('app.asar.unpacked', '')}`);
     if (fs.existsSync(unpacked)) return unpacked;
