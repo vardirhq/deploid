@@ -4,6 +4,7 @@
 
 ### Added
 
+- Added clean-install package validation on Linux, macOS, and Windows, plus an initialized-project smoke test on Linux.
 - Added packed-install release validation that exercises the published CLI, public API, and built-in module discovery.
 - Added a migration guide for projects and custom plugins moving from `@deploid/core` to `@deploid/cli`.
 - Added new top-level CLI commands for `doctor`, `daemon`, `artifacts`, `electron`, `version`, `changelog`, and `ship`.
