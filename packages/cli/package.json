@@ -35,13 +35,21 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -b",
+    "build": "node ./scripts/copy-builtins.mjs && tsc -b",
     "dev": "tsx src/index.ts",
     "test": "vitest run"
   },
   "dependencies": {
-    "@deploid/core": "workspace:*",
     "commander": "^12.1.0",
+    "execa": "^8.0.1",
+    "googleapis": "^154.1.0",
+    "sharp": "^0.33.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@deploid/core": "workspace:*",
     "@deploid/plugin-assets": "workspace:*",
     "@deploid/plugin-artifacts": "workspace:*",
     "@deploid/plugin-build-android": "workspace:*",
@@ -56,12 +64,6 @@
     "@deploid/plugin-publish": "workspace:*",
     "@deploid/plugin-release-init": "workspace:*",
     "@deploid/plugin-version": "workspace:*",
-    "execa": "^8.0.1"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "devDependencies": {
     "@types/node": "^20.19.23",
     "vitest": "^2.1.9"
   },
@@ -73,21 +75,10 @@
     },
     "./package.json": "./package.json"
   },
-  "bundledDependencies": [
-    "@deploid/core",
-    "@deploid/plugin-assets",
-    "@deploid/plugin-artifacts",
-    "@deploid/plugin-build-android",
-    "@deploid/plugin-changelog",
-    "@deploid/plugin-debug-network",
-    "@deploid/plugin-doctor",
-    "@deploid/plugin-deploy-android",
-    "@deploid/plugin-ci-init",
-    "@deploid/plugin-packaging-capacitor",
-    "@deploid/plugin-packaging-electron",
-    "@deploid/plugin-prepare-ios",
-    "@deploid/plugin-publish",
-    "@deploid/plugin-release-init",
-    "@deploid/plugin-version"
-  ]
+  "imports": {
+    "#core": {
+      "types": "./dist/internal/core/index.d.ts",
+      "default": "./dist/internal/core/index.js"
+    }
+  }
 }
