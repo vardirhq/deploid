@@ -8,9 +8,6 @@ importers:
 
   .:
     devDependencies:
-      '@changesets/cli':
-        specifier: ^2.29.7
-        version: 2.30.0(@types/node@24.9.1)
       '@types/node':
         specifier: ^24.9.1
         version: 24.9.1
@@ -20,6 +17,19 @@ importers:
 
   packages/cli:
     dependencies:
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+      execa:
+        specifier: ^8.0.1
+        version: 8.0.1
+      googleapis:
+        specifier: ^154.1.0
+        version: 154.1.0
+      sharp:
+        specifier: ^0.33.5
+        version: 0.33.5
+    devDependencies:
       '@deploid/core':
         specifier: workspace:*
         version: link:../core
@@ -65,13 +75,6 @@ importers:
       '@deploid/plugin-version':
         specifier: workspace:*
         version: link:../plugins/version
-      commander:
-        specifier: ^12.1.0
-        version: 12.1.0
-      execa:
-        specifier: ^8.0.1
-        version: 8.0.1
-    devDependencies:
       '@types/node':
         specifier: ^20.19.23
         version: 20.19.23
