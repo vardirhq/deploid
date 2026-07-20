@@ -14,6 +14,7 @@
 
 ### Changed
 
+- Retired `@deploid/studio` as a public npm package; the legacy prototype is now a private workspace and future GUI distribution will use standalone desktop installers.
 - Changed `@deploid/cli` to the single user-facing distribution, with private core and built-in module output carried inside the package.
 - Changed Sharp and Google APIs back to normal npm dependencies so native packages are selected for the user's platform instead of being frozen into the release tarball.
 - Updated current documentation and the website to distinguish built-ins from optional and third-party integrations.
