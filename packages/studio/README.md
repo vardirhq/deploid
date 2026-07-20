@@ -1,29 +1,14 @@
 # Deploid Studio
 
-Experimental desktop client for Deploid workflows in a project folder.
+This workspace contains the retired experimental Studio prototype. It is private and is
+not published to npm.
 
-## Install
+The supported Deploid product is the `@deploid/cli` package. Any future GUI should be
+distributed as a standalone desktop application (for example AppImage, DMG, and Windows
+installer) and use the CLI or its local daemon/API as the workflow engine.
+
+For local development of the retained prototype:
 
 ```bash
-npm install -g @deploid/studio
+pnpm --filter @deploid/studio dev
 ```
-
-## Run
-
-```bash
-deploid-studio
-```
-
-## What You Get
-
-- Project folder picker with recent-folder shortcuts.
-- Readiness-first workflow board driven by `deploid doctor`.
-- Blockers, warnings, artifacts, and connected device visibility without digging through logs.
-- Recommended quick actions based on current project state.
-- Live activity panel with output filters and copy/clear controls.
-- Run state indicators and session metrics.
-
-## Notes
-- Deploid Studio executes `@deploid/cli` commands from the selected working directory.
-- The primary product direction is CLI + reusable core APIs; Studio is an optional client on top of that stack.
-- Packaging in Deploid 2.0 is `capacitor` only.

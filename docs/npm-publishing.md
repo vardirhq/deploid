@@ -5,8 +5,8 @@ plugins remain separate workspace packages for development, but they are bundled
 the CLI tarball and are not independently published by the release workflow.
 
 `@deploid/plugin-storage` remains separate because it is installed into the consumer
-application and has its own Capacitor peer dependency. Deploid Studio also keeps its
-own package lifecycle.
+application and has its own Capacitor peer dependency. The legacy Studio workspace is
+private and is not an npm distribution.
 
 ## Enable trusted publishing
 

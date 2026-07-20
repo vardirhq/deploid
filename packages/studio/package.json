@@ -2,10 +2,7 @@
   "name": "@deploid/studio",
   "version": "2.0.8",
   "description": "Desktop GUI for running Deploid workflows in a project folder",
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
+  "private": true,
   "type": "module",
   "main": "dist/main.js",
   "bin": {
