@@ -2,7 +2,15 @@
   "name": "@deploid/studio",
   "version": "2.0.8",
   "description": "Desktop GUI for running Deploid workflows in a project folder",
-  "author": "Vardir",
+  "author": {
+    "name": "MadsenDev",
+    "email": "126353638+MadsenDev@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/vardirhq/deploid",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vardirhq/deploid.git"
+  },
   "desktopName": "deploid",
   "private": true,
   "type": "module",
@@ -41,6 +49,7 @@
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "linux": {
       "category": "Development",
+      "maintainer": "MadsenDev <126353638+MadsenDev@users.noreply.github.com>",
       "syncDesktopName": true,
       "synopsis": "Release web applications with Deploid",
       "target": ["AppImage", "deb"]
