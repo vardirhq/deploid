@@ -45,8 +45,6 @@ jobs:
         run: pnpm -r build
       - name: Package desktop app
         run: pnpm --filter @deploid/studio ${{ matrix.script }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Validate bundled CLI
         working-directory: packages/studio
         run: node scripts/validate-package.mjs release
