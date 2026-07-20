@@ -8,7 +8,7 @@ If you are building your own client around Deploid, see:
 
 - [examples/api-client/README.md](/home/chris/Documents/GitHub/deploid/examples/api-client/README.md)
 
-That example covers both direct `@deploid/core` usage and the optional local daemon mode.
+That example covers both direct `@deploid/cli` usage and the optional local daemon mode.
 
 ## Framework Examples
 
