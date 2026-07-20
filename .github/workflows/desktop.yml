@@ -53,6 +53,7 @@ jobs:
         run: |
           xvfb-run -a env \
             DEPLOID_STUDIO_SCREENSHOT_PATH="$GITHUB_WORKSPACE/packages/studio/release/studio-preview.png" \
+            DEPLOID_STUDIO_SCREENSHOT_DEMO="true" \
             DEPLOID_STUDIO_LAUNCH_CWD="$GITHUB_WORKSPACE" \
             pnpm --filter @deploid/studio exec electron dist/main.js --no-sandbox
       - name: Upload desktop artifacts
