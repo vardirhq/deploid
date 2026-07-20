@@ -1,1 +1,1 @@
-export * from '@deploid/core';
+export * from '#core';
