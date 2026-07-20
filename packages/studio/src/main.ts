@@ -58,6 +58,15 @@ function createWindow(): void {
   mainWindow.loadFile(join(__dirname, 'renderer', 'index.html'));
   if (screenshotPath) {
     mainWindow.webContents.once('did-finish-load', () => {
+      if (process.env.DEPLOID_STUDIO_SCREENSHOT_DEMO === 'true') {
+        setTimeout(() => {
+          sendLog('system', '$ deploid doctor --summary\n');
+          sendLog('stdout', 'BUILD    Web build completed in 7.3s\n');
+          sendLog('stdout', 'PACKAGE  Android and desktop targets detected\n');
+          sendLog('stderr', 'SIGN     Android artifact requires signing\n');
+          sendLog('stdout', 'READY    Desktop AppImage is ready\n');
+        }, 500);
+      }
       setTimeout(async () => {
         if (!mainWindow) return;
         const image = await mainWindow.webContents.capturePage();
@@ -116,6 +125,9 @@ ipcMain.handle('studio:get-default-cwd', () => getLaunchCwd());
 
 ipcMain.handle('studio:get-project-overview', (_event, payload: { cwd: string }) => {
   if (!payload.cwd) throw new Error('Project folder is required');
+  if (process.env.DEPLOID_STUDIO_SCREENSHOT_DEMO === 'true') {
+    return loadPreviewOverview(payload.cwd);
+  }
   return loadProjectOverview(payload.cwd);
 });
 
@@ -195,6 +207,31 @@ function loadProjectOverview(cwd: string) {
       android: fs.existsSync(join(projectRoot, 'android')),
       electron: fs.existsSync(join(projectRoot, 'electron')) || fs.existsSync(join(projectRoot, 'dist-electron'))
     }
+  };
+}
+
+function loadPreviewOverview(cwd: string) {
+  return {
+    projectName: 'Northstar',
+    version: '1.2.3',
+    cwd: resolve(cwd),
+    doctor: {
+      ok: false,
+      checks: [
+        { id: 'deploid-config', title: 'Deploid config', status: 'pass', message: 'Configuration loaded.' },
+        { id: 'web-build', title: 'Web build', status: 'pass', message: 'Web output is ready.' },
+        { id: 'capacitor-config', title: 'Capacitor', status: 'pass', message: 'Android project configured.' },
+        { id: 'android-project', title: 'Android project', status: 'pass', message: 'Native project is ready.' },
+        { id: 'desktop-package', title: 'Desktop package', status: 'pass', message: 'Desktop target configured.' },
+        { id: 'android-signing', title: 'Android signing', status: 'fail', message: 'Add a release keystore before publishing Android.' }
+      ]
+    },
+    artifacts: [
+      { label: 'Northstar-1.2.3.apk', type: 'android', path: join(resolve(cwd), 'release', 'Northstar-1.2.3.apk'), size: '18.4 MB' },
+      { label: 'Northstar-1.2.3.AppImage', type: 'desktop', path: join(resolve(cwd), 'release', 'Northstar-1.2.3.AppImage'), size: '74.8 MB' }
+    ],
+    devices: { available: true, count: 1, entries: [{ id: 'Pixel_8_API_35', status: 'device' }] },
+    presence: { config: true, capacitor: true, android: true, electron: true }
   };
 }
 
