@@ -55,7 +55,7 @@ program
   .option('--firebase', 'Set up Firebase push notifications during init')
   .option('-y, --yes', 'Accept all defaults without prompting (CI-friendly)')
   .option('--force', 'Overwrite existing deploid.config.ts')
-  .option('--all-plugins', 'Install all available plugins without prompts')
+  .option('--all-plugins', 'Install all optional app integrations without prompts')
   .option('--debug', 'Enable debug logging')
   .action(async (options) => {
     const { initProject } = await import('./init.js');

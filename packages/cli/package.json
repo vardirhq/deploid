@@ -12,20 +12,20 @@
   ],
   "author": "MadsenDev",
   "license": "MIT",
-  "homepage": "https://github.com/MadsenDev/deploid",
+  "homepage": "https://github.com/vardirhq/deploid",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MadsenDev/deploid.git"
+    "url": "https://github.com/vardirhq/deploid.git"
   },
   "bugs": {
-    "url": "https://github.com/MadsenDev/deploid/issues"
+    "url": "https://github.com/vardirhq/deploid/issues"
   },
   "private": false,
   "publishConfig": {
     "access": "public"
   },
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/api.js",
   "bin": {
     "deploid": "bin/deploid"
   },
@@ -37,8 +37,7 @@
   "scripts": {
     "build": "tsc -b",
     "dev": "tsx src/index.ts",
-    "test": "vitest run",
-    "prepublishOnly": "pnpm build"
+    "test": "vitest run"
   },
   "dependencies": {
     "@deploid/core": "workspace:*",
@@ -65,5 +64,30 @@
   "devDependencies": {
     "@types/node": "^20.19.23",
     "vitest": "^2.1.9"
-  }
+  },
+  "types": "dist/api.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/api.d.ts",
+      "import": "./dist/api.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bundledDependencies": [
+    "@deploid/core",
+    "@deploid/plugin-assets",
+    "@deploid/plugin-artifacts",
+    "@deploid/plugin-build-android",
+    "@deploid/plugin-changelog",
+    "@deploid/plugin-debug-network",
+    "@deploid/plugin-doctor",
+    "@deploid/plugin-deploy-android",
+    "@deploid/plugin-ci-init",
+    "@deploid/plugin-packaging-capacitor",
+    "@deploid/plugin-packaging-electron",
+    "@deploid/plugin-prepare-ios",
+    "@deploid/plugin-publish",
+    "@deploid/plugin-release-init",
+    "@deploid/plugin-version"
+  ]
 }

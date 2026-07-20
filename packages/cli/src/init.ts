@@ -91,9 +91,9 @@ export async function initProject(options: InitOptions): Promise<void> {
     await setupFirebase(cwd, options);
   }
 
-  // Install plugin dependencies
-  console.log('📦 Installing plugin dependencies...');
-  await installPluginDependencies(cwd, options, packageManager);
+  // Built-in plugins ship with @deploid/cli. Only app-runtime integrations are installed here.
+  console.log('✅ Built-in Deploid plugins are included with @deploid/cli');
+  await installOptionalPluginDependencies(cwd, options, packageManager);
 
   // Add deploid scripts to package.json for convenience
   addDeploidScripts(cwd, packageManager);
@@ -117,7 +117,7 @@ function generateConfig(options: InitOptions, packageManager: PackageManagerProf
   },` : `
   // firebase: { projectId: 'your-project-id', enabled: true },  // run: deploid firebase`;
 
-  return `import type { DeploidConfig } from '@deploid/core';
+  return `import type { DeploidConfig } from '@deploid/cli';
 
 const config: DeploidConfig = {
   appName: '${metadata.appName}',
@@ -723,69 +723,38 @@ async function setupFirebase(cwd: string, options: InitOptions): Promise<void> {
   }
 }
 
-async function installPluginDependencies(cwd: string, options: InitOptions, packageManager: PackageManagerProfile): Promise<void> {
-  // Core plugins required for every Android project
-  const corePlugins = [
-    '@deploid/plugin-assets',
-    '@deploid/plugin-build-android',
-    '@deploid/plugin-doctor',
-    '@deploid/plugin-version',
-    options.packaging === 'capacitor' ? '@deploid/plugin-packaging-capacitor' : null,
-  ].filter(Boolean) as string[];
+async function installOptionalPluginDependencies(
+  cwd: string,
+  options: InitOptions,
+  packageManager: PackageManagerProfile
+): Promise<void> {
+  const storagePackage = '@deploid/plugin-storage';
 
-  // Recommended but optional extras
-  const extraPlugins: Array<{ name: string; package: string }> = [
-    { name: 'deploy-android (ADB device deployment)', package: '@deploid/plugin-deploy-android' },
-    { name: 'prepare-ios (iOS Xcode project handoff)', package: '@deploid/plugin-prepare-ios' },
-    { name: 'storage (cross-platform Capacitor storage)', package: '@deploid/plugin-storage' },
-    { name: 'debug-network (network debugging overlay)', package: '@deploid/plugin-debug-network' },
-    { name: 'packaging-electron (desktop app packaging)', package: '@deploid/plugin-packaging-electron' },
-  ];
+  if (options.yes && !options.allPlugins) {
+    console.log('  Skipping optional app integrations (--yes mode).');
+    return;
+  }
 
+  let installStorage = Boolean(options.allPlugins);
+  if (!options.yes && !options.allPlugins) {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const question = (prompt: string): Promise<string> => new Promise((resolve) => rl.question(prompt, resolve));
+    try {
+      const answer = (await question('  Install optional cross-platform storage support? (y/N): ')).trim();
+      installStorage = answer.toLowerCase().startsWith('y');
+    } finally {
+      rl.close();
+    }
+  }
+
+  if (!installStorage) return;
+
+  console.log(`📦 Installing optional app integration: ${storagePackage}`);
   try {
-    console.log(`  Core: ${corePlugins.join(', ')}`);
-    await installPackages(cwd, packageManager, corePlugins);
-    console.log('✅ Core plugins installed');
-
-    let selectedExtras: string[] = [];
-
-    if (options.allPlugins) {
-      selectedExtras = extraPlugins.map((p) => p.package);
-      console.log('✅ All optional plugins selected (--all-plugins)');
-    } else if (options.yes) {
-      console.log('  Skipping optional plugins (--yes mode). Add later with: deploid plugin --install <name>');
-    } else {
-      // Ask once with a concise list instead of prompting one-by-one
-      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-      const question = (prompt: string): Promise<string> => new Promise((resolve) => rl.question(prompt, resolve));
-
-      try {
-        console.log('\n  Optional plugins (press Enter to skip, or type numbers separated by spaces):');
-        for (const [i, p] of extraPlugins.entries()) {
-          console.log(`    [${i + 1}] ${p.name}`);
-        }
-        const answer = (await question('  Install extras [e.g. 1 2]: ')).trim();
-        if (answer) {
-          const indices = answer.split(/[\s,]+/).map(Number).filter((n) => n >= 1 && n <= extraPlugins.length);
-          selectedExtras = indices.map((n) => extraPlugins[n - 1].package);
-        }
-      } finally {
-        rl.close();
-      }
-    }
-
-    if (selectedExtras.length > 0) {
-      console.log(`\n📦 Installing optional plugins: ${selectedExtras.join(', ')}`);
-      try {
-        await installPackages(cwd, packageManager, selectedExtras);
-        console.log('✅ Optional plugins installed');
-      } catch (error) {
-        console.log('⚠️  Some optional plugins failed to install. You can add them later:');
-        console.log(`    ${installCommandHint(packageManager, selectedExtras)}`);
-      }
-    }
-  } catch (error) {
-    console.log('⚠️  Failed to install plugin packages:', error);
-    console.log(`    Run manually: ${installCommandHint(packageManager, corePlugins)}`);
+    await installPackages(cwd, packageManager, [storagePackage]);
+    console.log('✅ Storage integration installed');
+  } catch {
+    console.log('⚠️  Storage integration could not be installed automatically.');
+    console.log(`    Run manually: ${installCommandHint(packageManager, [storagePackage])}`);
   }
 }

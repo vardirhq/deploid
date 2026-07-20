@@ -4,37 +4,101 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - 'packages/cli/**'
+      - 'packages/core/**'
+      - 'packages/plugins/**'
+      - 'scripts/prepare-release.mjs'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: npm-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release:
+  validate-package:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9.12.0
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
-
       - name: Install
         run: pnpm install --frozen-lockfile
-
       - name: Build
         run: pnpm -r build
+      - name: Test
+        run: pnpm -r --if-present test
+      - name: Assemble single-package distribution
+        run: pnpm --config.node-linker=hoisted --filter @deploid/cli deploy --prod .release/cli
+      - name: Derive release version
+        run: node scripts/prepare-release.mjs .release/cli
+      - name: Pack and inspect npm tarball
+        working-directory: .release/cli
+        run: |
+          mkdir -p ../artifacts
+          pnpm --config.node-linker=hoisted pack --pack-destination ../artifacts
+          tarball=$(find ../artifacts -name '*.tgz' -print -quit)
+          tar -tzf "$tarball" > ../tarball-contents.txt
+          grep -q 'package/node_modules/@deploid/core/' ../tarball-contents.txt
+          grep -q 'package/node_modules/@deploid/plugin-assets/' ../tarball-contents.txt
+          grep -q 'package/node_modules/@deploid/plugin-publish/' ../tarball-contents.txt
 
-      - name: Changesets Release
-        uses: changesets/action@v1
+  publish:
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main' &&
+      vars.NPM_TRUSTED_PUBLISHING == 'true'
+    needs: validate-package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          version: pnpm version-packages
-          publish: pnpm -r publish
+          version: 9.12.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm -r build
+      - name: Assemble single-package distribution
+        run: pnpm --config.node-linker=hoisted --filter @deploid/cli deploy --prod .release/cli
+      - name: Derive release version
+        id: release
+        run: echo "version=$(node scripts/prepare-release.mjs .release/cli)" >> "$GITHUB_OUTPUT"
+      - name: Pack release tarball
+        working-directory: .release/cli
+        run: |
+          mkdir -p ../artifacts
+          pnpm --config.node-linker=hoisted pack --pack-destination ../artifacts
+      - name: Publish to npm with provenance
+        run: npm publish .release/artifacts/*.tgz --access public --provenance
+      - name: Create GitHub release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "v${{ steps.release.outputs.version }}"
+          --generate-notes
+          --title "@deploid/cli v${{ steps.release.outputs.version }}"
