@@ -25,3 +25,7 @@ After setup, either merge another change to `main` or run the Release workflow
 manually. Every successful main run publishes a new version with npm provenance.
 `feat:` commits receive a minor bump, breaking changes receive a major bump, and
 all other main updates receive a patch bump.
+
+## Status
+
+Trusted publishing is enabled for the production release workflow.
