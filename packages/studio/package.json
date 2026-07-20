@@ -1,6 +1,6 @@
 {
   "name": "@deploid/studio",
-  "version": "2.0.8",
+  "version": "2.0.8-beta.1",
   "description": "Desktop GUI for running Deploid workflows in a project folder",
   "author": {
     "name": "MadsenDev",
