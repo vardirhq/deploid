@@ -299,7 +299,7 @@
     <div>
       <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## PROGRAMMATIC API</div>
       <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 14px">Drive it from your own tooling.</h2>
-      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Import <span style="color:var(--accent)">@deploid/core</span> instead of shelling out — or run <span style="color:var(--amber)">deploid daemon</span> for a language-agnostic local HTTP interface.</p>
+      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Import <span style="color:var(--accent)">@deploid/cli</span> instead of shelling out — or run <span style="color:var(--amber)">deploid daemon</span> for a language-agnostic local HTTP interface.</p>
       <div style="border-radius:13px;overflow:hidden;border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow-panel)">
         <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
           <span style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></span>
@@ -308,7 +308,7 @@
           <span style="margin-left:6px;font-size:11px;color:var(--muted-dim)">ship.ts</span>
         </div>
         <div style="padding:16px 18px;font-size:12px;line-height:1.85;overflow:auto">
-          <div><span style="color:#c678dd">import</span> { runDoctorCommand, inspectArtifacts } <span style="color:#c678dd">from</span> <span style="color:var(--green)">'@deploid/core'</span>;</div>
+          <div><span style="color:#c678dd">import</span> { runDoctorCommand, inspectArtifacts } <span style="color:#c678dd">from</span> <span style="color:var(--green)">'@deploid/cli'</span>;</div>
           <div style="height:8px"></div>
           <div><span style="color:var(--muted-dim)">// full doctor check, JSON out</span></div>
           <div><span style="color:#c678dd">await</span> <span style="color:#61afef">runDoctorCommand</span>({ cwd, doctorOptions: { json: <span style="color:var(--amber)">true</span> } });</div>
