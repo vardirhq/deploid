@@ -4,6 +4,9 @@
 
 ### Added
 
+- Added a standalone Deploid desktop client with readiness, workflow, target, artifact, device, and live CLI activity views.
+- Added native AppImage/DEB, DMG/ZIP, and NSIS/portable desktop packaging with cross-platform GitHub Actions builds and bundled-CLI smoke validation.
+- Added branded desktop application artwork and automated implementation screenshots for visual review.
 - Added clean-install package validation on Linux, macOS, and Windows, plus an initialized-project smoke test on Linux.
 - Added packed-install release validation that exercises the published CLI, public API, and built-in module discovery.
 - Added a migration guide for projects and custom plugins moving from `@deploid/core` to `@deploid/cli`.
@@ -14,7 +17,7 @@
 
 ### Changed
 
-- Retired `@deploid/studio` as a public npm package; the legacy prototype is now a private workspace and future GUI distribution will use standalone desktop installers.
+- Retired `@deploid/studio` as a public npm package; the private workspace now produces standalone desktop installers with an embedded CLI.
 - Changed `@deploid/cli` to the single user-facing distribution, with private core and built-in module output carried inside the package.
 - Changed Sharp and Google APIs back to normal npm dependencies so native packages are selected for the user's platform instead of being frozen into the release tarball.
 - Updated current documentation and the website to distinguish built-ins from optional and third-party integrations.
