@@ -183,6 +183,7 @@ describe('Deploid CLI', () => {
     expect(updatedConfig).toContain("keystorePath: 'secrets/android-upload-keystore.jks'");
     expect(updatedConfig).toContain("repo: 'acme/ninegrid'");
     expect(updatedConfig).toContain("track: 'internal'");
+    expect(updatedConfig).toContain("status: 'draft'");
     expect(envExample).toContain('DEPLOID_ANDROID_STORE_PASSWORD=replace-me');
     expect(gitignore).toContain('secrets/android-upload-keystore.jks');
     expect(fsSync.existsSync(path.join(tmpDir, 'secrets'))).toBe(true);
@@ -219,6 +220,42 @@ describe('Deploid CLI', () => {
     expect(stdout).toContain('app-release.aab');
     expect(stdout).toContain('tag: v1.2.3');
     expect(stdout).toContain('github repo: acme/publish-app');
+  });
+
+  it('should preserve an explicit Play release status in publish dry-run output', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'deploid-publish-play-status-'));
+    const artifactDir = path.join(tmpDir, 'android', 'app', 'build', 'outputs', 'bundle', 'release');
+    await fs.mkdir(artifactDir, { recursive: true });
+    await fs.writeFile(path.join(artifactDir, 'app-release.aab'), 'release-binary');
+    await fs.writeFile(
+      path.join(tmpDir, 'deploid.config.mjs'),
+      `export default {
+  appName: 'PlayStatusApp',
+  appId: 'com.example.playstatus',
+  web: { framework: 'vite', buildCommand: 'npm run build', webDir: 'dist' },
+  android: {
+    packaging: 'capacitor',
+    version: { code: 8, name: '1.2.4' },
+    build: { buildType: 'aab' }
+  },
+  publish: {
+    play: {
+      track: 'internal',
+      status: 'draft',
+      serviceAccountJson: 'secrets/play-service-account.json'
+    }
+  }
+};\n`
+    );
+
+    const { stdout, exitCode } = runCli(['publish', '--dry-run', '--target', 'play'], {
+      cwd: tmpDir
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('publish dry-run: play');
+    expect(stdout).toContain('play track: internal');
+    expect(stdout).toContain('play status: draft');
   });
 
   it('should list artifacts as json', async () => {

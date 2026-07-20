@@ -54,7 +54,11 @@ export interface DeploidConfig {
   };
   assets?: { source: string; output?: string };
   publish?: {
-    play?: { track?: 'internal' | 'alpha' | 'beta' | 'production'; serviceAccountJson?: string };
+    play?: {
+      track?: 'internal' | 'alpha' | 'beta' | 'production';
+      status?: 'draft' | 'inProgress' | 'halted' | 'completed';
+      serviceAccountJson?: string;
+    };
     github?: { repo: string; draft?: boolean };
   };
   plugins?: string[];

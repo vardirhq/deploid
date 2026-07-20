@@ -101,6 +101,7 @@ export default {
   publish: {
     play: {
       track: 'internal', // 'internal' | 'alpha' | 'beta' | 'production'
+      status: 'draft', // 'draft' | 'inProgress' | 'halted' | 'completed'
       serviceAccountJson: 'secrets/play.json',
     },
     github: {
@@ -201,7 +202,8 @@ export default {
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `track` | `'internal' \| 'alpha' \| 'beta' \| 'production'` | ❌ | Play Store release track |
+| `track` | `'internal' \| 'alpha' \| 'beta' \| 'production'` | ❌ | Play Store release track; defaults to `internal` |
+| `status` | `'draft' \| 'inProgress' \| 'halted' \| 'completed'` | ❌ | Release state sent to Play. New `release init` scaffolds use `draft`; existing configs without this option retain `completed` behavior. |
 | `serviceAccountJson` | `string` | ❌ | Path to Google service account JSON |
 
 #### GitHub Releases
@@ -498,29 +500,3 @@ export default {
     minSdk: 24,
     permissions: ['INTERNET', 'CAMERA', 'STORAGE', 'NOTIFICATIONS'],
     signing: {
-      keystorePath: './android.keystore',
-      alias: 'mykey',
-      storePasswordEnv: 'ANDROID_STORE_PWD',
-      keyPasswordEnv: 'ANDROID_KEY_PWD',
-    },
-    version: {
-      code: 10,
-      name: '2.1.0',
-    },
-  },
-  assets: {
-    source: 'assets/logo.svg',
-    output: 'assets-gen/',
-  },
-  publish: {
-    play: {
-      track: 'production',
-      serviceAccountJson: 'secrets/play.json',
-    },
-    github: {
-      repo: 'mycompany/myawesomeapp',
-      draft: false,
-    },
-  },
-};
-```

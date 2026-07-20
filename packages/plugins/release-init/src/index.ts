@@ -9,6 +9,7 @@ interface ReleaseInitOptions {
   keyPasswordEnv?: string;
   githubRepo?: string;
   playTrack?: 'internal' | 'alpha' | 'beta' | 'production';
+  playStatus?: 'draft' | 'inProgress' | 'halted' | 'completed';
   playServiceAccount?: string;
   buildType?: 'apk' | 'aab' | 'both';
 }
@@ -67,6 +68,7 @@ async function runReleaseInit(ctx: PipelineContext): Promise<void> {
   });
   updatedConfig = ensureProperty(updatedConfig, ['publish'], 'play', {
     track: options.playTrack,
+    status: options.playStatus,
     serviceAccountJson: options.playServiceAccount
   });
   updatedConfig = ensureProperty(updatedConfig, ['publish'], 'github', {
@@ -108,6 +110,7 @@ function withDefaults(options: ReleaseInitOptions | undefined, ctx: PipelineCont
     keyPasswordEnv: options?.keyPasswordEnv || 'DEPLOID_ANDROID_KEY_PASSWORD',
     githubRepo: options?.githubRepo || inferGithubRepo(ctx.cwd) || 'owner/repo',
     playTrack: options?.playTrack || 'internal',
+    playStatus: options?.playStatus || 'draft',
     playServiceAccount: options?.playServiceAccount || 'secrets/play-service-account.json',
     buildType: options?.buildType || 'aab'
   };

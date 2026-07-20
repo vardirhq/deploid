@@ -21,50 +21,50 @@ importers:
   packages/cli:
     dependencies:
       '@deploid/core':
-        specifier: 2.0.2
-        version: 2.0.2
+        specifier: workspace:*
+        version: link:../core
       '@deploid/plugin-artifacts':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/artifacts
       '@deploid/plugin-assets':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/assets
       '@deploid/plugin-build-android':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/build-android
       '@deploid/plugin-changelog':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/changelog
       '@deploid/plugin-ci-init':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/ci-init
       '@deploid/plugin-debug-network':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/debug-network
       '@deploid/plugin-deploy-android':
-        specifier: 2.0.1
-        version: 2.0.1
+        specifier: workspace:*
+        version: link:../plugins/deploy-android
       '@deploid/plugin-doctor':
-        specifier: 2.0.3
-        version: 2.0.3
+        specifier: workspace:*
+        version: link:../plugins/doctor
       '@deploid/plugin-packaging-capacitor':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/packaging-capacitor
       '@deploid/plugin-packaging-electron':
-        specifier: 2.0.6
-        version: 2.0.6
+        specifier: workspace:*
+        version: link:../plugins/packaging-electron
       '@deploid/plugin-prepare-ios':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/prepare-ios
       '@deploid/plugin-publish':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/publish
       '@deploid/plugin-release-init':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/release-init
       '@deploid/plugin-version':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: workspace:*
+        version: link:../plugins/version
       commander:
         specifier: ^12.1.0
         version: 12.1.0
