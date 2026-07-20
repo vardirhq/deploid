@@ -42,14 +42,14 @@ jobs:
       - name: Test
         run: pnpm -r --if-present test
       - name: Assemble single-package distribution
-        run: pnpm --filter @deploid/cli deploy --prod .release/cli
+        run: pnpm --config.node-linker=hoisted --filter @deploid/cli deploy --prod .release/cli
       - name: Derive release version
         run: node scripts/prepare-release.mjs .release/cli
       - name: Pack and inspect npm tarball
         working-directory: .release/cli
         run: |
           mkdir -p ../artifacts
-          pnpm pack --pack-destination ../artifacts
+          pnpm --config.node-linker=hoisted pack --pack-destination ../artifacts
           tarball=$(find ../artifacts -name '*.tgz' -print -quit)
           tar -tzf "$tarball" > ../tarball-contents.txt
           grep -q 'package/node_modules/@deploid/core/' ../tarball-contents.txt
@@ -84,7 +84,7 @@ jobs:
       - name: Build
         run: pnpm -r build
       - name: Assemble single-package distribution
-        run: pnpm --filter @deploid/cli deploy --prod .release/cli
+        run: pnpm --config.node-linker=hoisted --filter @deploid/cli deploy --prod .release/cli
       - name: Derive release version
         id: release
         run: echo "version=$(node scripts/prepare-release.mjs .release/cli)" >> "$GITHUB_OUTPUT"
@@ -92,7 +92,7 @@ jobs:
         working-directory: .release/cli
         run: |
           mkdir -p ../artifacts
-          pnpm pack --pack-destination ../artifacts
+          pnpm --config.node-linker=hoisted pack --pack-destination ../artifacts
       - name: Publish to npm with provenance
         run: npm publish .release/artifacts/*.tgz --access public --provenance
       - name: Create GitHub release
