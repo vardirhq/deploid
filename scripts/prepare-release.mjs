@@ -35,5 +35,6 @@ const nextVersion = bump === 'major'
     : `${major}.${minor}.${patch + 1}`;
 
 packageJson.version = nextVersion;
+delete packageJson.devDependencies;
 writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
 process.stdout.write(nextVersion);

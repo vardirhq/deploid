@@ -1,265 +1,53 @@
-# Deploid Architecture
+# Deploid architecture
 
-This document explains the internal architecture of Deploid and how its components work together.
+Deploid is modular in the repository and monolithic at the npm distribution boundary.
 
-## 🏗️ High-Level Architecture
+## Package boundary
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web App       │    │   Deploid    │    │   Android App   │
-│   (React/Vue)   │───▶│   Pipeline      │───▶│   (APK/AAB)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+- `@deploid/cli` is the public package and contains the executable and TypeScript API.
+- `packages/core` is a private workspace containing configuration, pipelines, logging, and loading.
+- `packages/plugins/*` contains private built-in workflow modules.
+- `@deploid/plugin-storage` is public because it runs inside consumer applications.
+- Deploid Studio has an independent package lifecycle.
 
-## 📦 Monorepo Structure
+During `@deploid/cli` build, compiled core and built-in output is copied into
+`dist/internal`. Third-party libraries such as Sharp and Google APIs remain normal
+CLI dependencies, allowing npm to select platform-correct native packages.
 
-```
-deploid/
-├── packages/
-│   ├── cli/                    # Command line interface
-│   ├── core/                   # Core functionality
-│   └── plugins/                # Modular plugins
-│       ├── assets/             # Asset generation
-│       ├── packaging-capacitor/ # Capacitor integration
-│       └── build-android/      # Android building
-├── examples/                   # Example projects
-└── docs/                       # Documentation
+## Command flow
+
+```text
+command -> load configuration -> load built-in/custom module -> create context -> run pipeline
 ```
 
-## 🧩 Core Components
+The loader prefers the internal module carried by the current CLI release. If no
+built-in exists for a key, it resolves an installed `@deploid/plugin-<key>` package.
 
-### 1. CLI Package (`@deploid/cli`)
+## Public API
 
-**Purpose**: Command-line interface and user interaction
+Consumers import types and orchestration helpers from the same package:
 
-**Key Files**:
-- `src/index.ts` - Main CLI entry point with Commander.js
-- `src/init.ts` - Project initialization logic
-
-**Responsibilities**:
-- Parse command-line arguments
-- Load configuration
-- Orchestrate plugin execution
-- Provide user feedback
-
-### 2. Core Package (`@deploid/core`)
-
-**Purpose**: Shared functionality and plugin orchestration
-
-**Key Files**:
-- `src/logger.ts` - Logging system with configurable levels
-- `src/config.ts` - Configuration loading and validation
-- `src/pipeline.ts` - Plugin execution pipeline
-- `src/plugin-loader.ts` - Dynamic plugin loading
-- `src/types.ts` - TypeScript type definitions
-
-**Responsibilities**:
-- Configuration management
-- Plugin orchestration
-- Logging and error handling
-- Type safety
-
-### 3. Plugin System
-
-**Purpose**: Modular, extensible functionality
-
-**Plugin Types**:
-- **Assets**: Icon and screenshot generation
-- **Packaging**: Web app wrapping (Capacitor in 2.0)
-- **Build**: APK/AAB generation
-- **Publish**: Planned for future release
-
-## 🔄 Pipeline Execution
-
-### 1. Command Flow
-
-```
-User Command → CLI → Config Loader → Plugin Loader → Pipeline → Plugins
+```ts
+import { loadConfig, runPluginCommand } from '@deploid/cli';
 ```
 
-### 2. Plugin Loading
+The package export maps that API to the internal core output without exposing the
+private workspace as a separately versioned product.
 
-```typescript
-// Dynamic plugin loading
-const plugin = await loadPlugin('assets', config);
-await runPipeline(ctx, [plugin]);
+## Repository layout
+
+```text
+packages/
+  cli/                 public npm distribution
+  core/                private runtime workspace
+  plugins/             private built-ins plus public storage integration
+  studio/              separately distributed desktop application
 ```
 
-### 3. Plugin Interface
+## Design rules
 
-```typescript
-export interface DeploidPlugin {
-  name: string;
-  validate?: (ctx) => Promise<void>;
-  plan?: (ctx) => Promise<string[]>;
-  run: (ctx) => Promise<void>;
-}
-```
-
-## 🧩 Plugin Architecture
-
-### Plugin Structure
-
-```
-packages/plugins/plugin-name/
-├── src/
-│   └── index.ts              # Plugin implementation
-├── package.json              # Plugin dependencies
-├── tsconfig.json             # TypeScript configuration
-└── dist/                     # Compiled output
-```
-
-### Plugin Interface
-
-```typescript
-export default {
-  name: 'my-plugin',
-  async validate(ctx) {
-    // optional preflight
-  },
-  async plan(ctx) {
-    return ['Step 1', 'Step 2'];
-  },
-  async run({ logger }) {
-    logger.info('Plugin executing...');
-  }
-};
-```
-
-### Plugin Loading
-
-```typescript
-// Resolve installed package first, then local monorepo fallback.
-const plugin = await loadPlugin('my-plugin', config);
-```
-
-## 🔧 Configuration System
-
-### Configuration Loading
-
-```typescript
-// Multiple format support
-const candidates = [
-  'deploid.config.ts',
-  'deploid.config.js',
-  'deploid.config.mjs',
-  'deploid.config.cjs'
-];
-```
-
-### Configuration Types
-
-```typescript
-export interface DeploidConfig {
-  appName: string;
-  appId: string;
-  web: WebConfig;
-  android: AndroidConfig;
-  assets?: AssetConfig;
-  publish?: PublishConfig; // reserved for future automated publishing
-  plugins?: string[];
-}
-```
-
-## 📊 Data Flow
-
-### 1. Initialization Flow
-
-```
-init command → Generate config → Create directories → Setup baseline files
-```
-
-### 2. Asset Generation Flow
-
-```
-assets command → Load config → Sharp processing → Generate icons → Save files
-```
-
-### 3. Packaging Flow
-
-```
-package command → Load config → Initialize Capacitor → Build web app → Sync assets → Add Android platform
-```
-
-### 4. Build Flow
-
-```
-build command → Load config → Capacitor build → Generate APK/AAB → Sign packages
-```
-
-## 🔌 Plugin Development
-
-### Creating a Plugin
-
-1. **Create plugin directory**:
-```bash
-mkdir packages/plugins/my-plugin
-cd packages/plugins/my-plugin
-```
-
-2. **Setup package.json**:
-```json
-{
-  "name": "deploid-plugin-my-plugin",
-  "version": "0.0.0",
-  "type": "module",
-  "main": "dist/index.js",
-  "dependencies": {
-    "@deploid/core": "workspace:*"
-  }
-}
-```
-
-3. **Implement plugin**:
-```typescript
-import { PipelineStep } from '../../../core/dist/index.js';
-
-export const myPlugin = (): PipelineStep => async ({ logger, config, cwd }) => {
-  logger.info('My plugin executing...');
-  // Plugin implementation
-};
-```
-
-4. **Install and load as package**:
-```bash
-pnpm add deploid-plugin-my-plugin
-```
-
-## 🎯 Design Principles
-
-### 1. Modularity
-- Each plugin is independent
-- Loose coupling between components
-- Easy to add/remove functionality
-
-### 2. Extensibility
-- Plugin system allows custom functionality
-- Template system for different frameworks
-- Configuration-driven behavior
-
-### 3. Type Safety
-- Full TypeScript coverage
-- Strong typing for configuration
-- Compile-time error checking
-
-### 4. Developer Experience
-- Clear error messages
-- Debug logging
-- Comprehensive documentation
-
-## 🔄 Future Architecture
-
-### Planned Enhancements
-
-1. **Plugin Registry**: NPM-based plugin discovery
-2. **Template Engine**: Dynamic template generation
-3. **CI/CD Integration**: GitHub Actions generator
-4. **Multi-Platform**: iOS, Windows, macOS support
-5. **Cloud Build**: Remote build services
-
-### Scalability Considerations
-
-- **Plugin Caching**: Avoid repeated loading
-- **Parallel Execution**: Multi-plugin concurrency
-- **Resource Management**: Memory and CPU optimization
-- **Error Recovery**: Graceful failure handling
+1. Built-in module versions always match the CLI release.
+2. User projects never install built-ins individually.
+3. Native and third-party dependencies are installed normally by npm.
+4. Custom plugins depend on the public `@deploid/cli` contract.
+5. Release validation must install the packed tarball and exercise both CLI and API.

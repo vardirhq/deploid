@@ -2,11 +2,11 @@
 
 Deploid's primary product direction is now:
 
-1. `@deploid/core` as the reusable workflow/runtime layer
+1. `@deploid/cli` as the reusable workflow/runtime layer
 2. `@deploid/cli` as the terminal client
 3. optional clients such as Studio or third-party apps on top
 
-This document covers the app-facing API currently exported by `@deploid/core`.
+This document covers the app-facing API currently exported by `@deploid/cli`.
 
 ## Design Goals
 
@@ -16,7 +16,7 @@ This document covers the app-facing API currently exported by `@deploid/core`.
 
 ## Current Surface
 
-`@deploid/core` currently exports these app-facing helpers:
+`@deploid/cli` currently exports these app-facing helpers:
 
 - `createFallbackConfig()`
 - `loadConfigOptional(cwd?, fallback?)`
@@ -32,13 +32,13 @@ These are exported from:
 ## Install
 
 ```bash
-npm install @deploid/core
+npm install @deploid/cli
 ```
 
 ## Example
 
 ```ts
-import { inspectArtifacts, runDoctorCommand, runPluginCommand } from '@deploid/core';
+import { inspectArtifacts, runDoctorCommand, runPluginCommand } from '@deploid/cli';
 
 await runDoctorCommand({
   cwd: '/path/to/project',
@@ -116,7 +116,7 @@ Use it for:
 Example:
 
 ```ts
-import { inspectArtifacts, loadConfigOptional } from '@deploid/core';
+import { inspectArtifacts, loadConfigOptional } from '@deploid/cli';
 
 const config = await loadConfigOptional(projectRoot);
 const artifacts = inspectArtifacts(projectRoot, config);
@@ -129,7 +129,7 @@ Runs `adb devices` and returns structured device records.
 Example:
 
 ```ts
-import { listAndroidDevices } from '@deploid/core';
+import { listAndroidDevices } from '@deploid/cli';
 
 const devices = listAndroidDevices();
 ```

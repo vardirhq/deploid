@@ -165,10 +165,10 @@ Not sure if you have everything? `deploid doctor` will tell you.
 
 ## Programmatic API
 
-Use `@deploid/core` to drive Deploid from your own tooling instead of shelling out:
+Use `@deploid/cli` to drive Deploid from your own tooling instead of shelling out:
 
 ```ts
-import { runDoctorCommand, runPluginCommand, inspectArtifacts } from '@deploid/core';
+import { runDoctorCommand, runPluginCommand, inspectArtifacts } from '@deploid/cli';
 
 // Run a full doctor check
 await runDoctorCommand({
@@ -189,7 +189,7 @@ Or run `deploid daemon` for a language-agnostic local HTTP interface.
 
 ## Plugin system
 
-Deploid is built on a plugin pipeline. Every capability — assets, packaging, build, deploy, publish — is a plugin. You can write your own:
+Deploid is built on a plugin pipeline. Assets, packaging, build, deploy, and publishing are internal modules shipped with `@deploid/cli`; users install one package. Storage remains an optional app-runtime integration, and third parties can still write custom plugins:
 
 ```bash
 deploid plugin init my-custom-step

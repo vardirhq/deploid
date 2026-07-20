@@ -25,10 +25,9 @@ interface ValidationResult {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const cliPackageJson = JSON.parse(readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')) as {
-  dependencies?: Record<string, string>;
+  version: string;
 };
-const corePackageJson = JSON.parse(readFileSync(path.join(__dirname, '..', '..', 'core', 'package.json'), 'utf8')) as { version: string };
-const coreDependencyVersion = resolveCoreDependencyVersion();
+const cliPeerVersion = `^${cliPackageJson.version}`;
 
 export async function initPluginScaffold(rawName: string, options: PluginInitOptions = {}): Promise<void> {
   const pluginKey = normalizePluginKey(rawName);
@@ -91,9 +90,8 @@ function inspectPluginScaffold(targetDir: string): ValidationResult {
       const name = String(packageJson.name || '');
       const main = String(packageJson.main || '');
       const type = String(packageJson.type || '');
-      const hasCoreDep = Boolean(
-        (packageJson.dependencies as Record<string, unknown> | undefined)?.['@deploid/core']
-        || (packageJson.peerDependencies as Record<string, unknown> | undefined)?.['@deploid/core']
+      const hasCliPeer = Boolean(
+        (packageJson.peerDependencies as Record<string, unknown> | undefined)?.['@deploid/cli']
       );
       checks.push(name.startsWith('@deploid/plugin-')
         ? pass('package-name', `package.json name uses the @deploid/plugin-* convention (${name}).`)
@@ -104,9 +102,9 @@ function inspectPluginScaffold(targetDir: string): ValidationResult {
       checks.push(type === 'module'
         ? pass('package-type', 'package.json type is module.')
         : fail('package-type', 'package.json type should be module.'));
-      checks.push(hasCoreDep
-        ? pass('core-dependency', '@deploid/core dependency is present.')
-        : fail('core-dependency', '@deploid/core dependency is missing.'));
+      checks.push(hasCliPeer
+        ? pass('cli-peer', '@deploid/cli peer dependency is present.')
+        : fail('cli-peer', '@deploid/cli peer dependency is missing.'));
     } catch (error) {
       checks.push(fail('package-parse', `package.json is not valid JSON: ${String(error)}`));
     }
@@ -163,8 +161,8 @@ function renderPackageJson(packageName: string): string {
     scripts: {
       build: 'tsc -p tsconfig.json'
     },
-    dependencies: {
-      '@deploid/core': coreDependencyVersion
+    peerDependencies: {
+      '@deploid/cli': cliPeerVersion
     },
     devDependencies: {
       typescript: '^5.9.3'
@@ -193,7 +191,7 @@ function renderTsconfig(): string {
 }
 
 function renderPluginSource(pluginKey: string): string {
-  return `import type { DeploidPlugin } from '@deploid/core';
+  return `import type { DeploidPlugin } from '@deploid/cli';
 
 const plugin: DeploidPlugin = {
   name: '${pluginKey}',
@@ -212,14 +210,6 @@ const plugin: DeploidPlugin = {
 export default plugin;
 export { plugin };
 `;
-}
-
-function resolveCoreDependencyVersion(): string {
-  const declared = cliPackageJson.dependencies?.['@deploid/core'];
-  if (!declared || declared.startsWith('workspace:')) {
-    return `^${corePackageJson.version}`;
-  }
-  return declared;
 }
 
 function renderReadme(packageName: string, pluginKey: string): string {

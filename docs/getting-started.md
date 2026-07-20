@@ -21,7 +21,7 @@ npm install -g @deploid/cli
 For development from source:
 
 ```bash
-git clone https://github.com/MadsenDev/deploid.git
+git clone https://github.com/vardirhq/deploid.git
 cd deploid
 pnpm install
 pnpm -r build
@@ -96,7 +96,7 @@ Add `--logs` to tail logcat output.
 `deploid init` generates `deploid.config.ts` automatically. Minimal example:
 
 ```typescript
-import type { DeploidConfig } from '@deploid/core';
+import type { DeploidConfig } from '@deploid/cli';
 
 const config: DeploidConfig = {
   appName: 'MyApp',

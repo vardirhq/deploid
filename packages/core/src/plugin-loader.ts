@@ -10,7 +10,14 @@ export async function loadPlugin(pluginName: string, config: DeploidConfig): Pro
 
   const packageName = `@deploid/plugin-${pluginName}`;
 
-  // First resolve plugin as an installed package.
+  // Published CLIs carry built-ins beside the copied core output. Prefer those
+  // modules so stale separately installed packages cannot override CLI behavior.
+  const bundledPluginPath = new URL(`../plugins/${pluginName}/index.js`, import.meta.url);
+  if (existsSync(bundledPluginPath)) {
+    return instantiatePlugin(await import(bundledPluginPath.href), pluginName);
+  }
+
+  // Resolve third-party plugins as installed packages.
   try {
     return instantiatePlugin(await import(packageName), pluginName);
   } catch {

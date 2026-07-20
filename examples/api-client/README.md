@@ -5,7 +5,7 @@ This example shows how a custom app or script can call Deploid through the share
 ## Files
 
 - `doctor.mjs` - runs the shared doctor command API
-- `artifacts.mjs` - reads artifact metadata through `@deploid/core`
+- `artifacts.mjs` - reads artifact metadata through `@deploid/cli`
 - `daemon-client.mjs` - calls the local HTTP daemon
 
 ## Run
@@ -13,7 +13,7 @@ This example shows how a custom app or script can call Deploid through the share
 From this repository root:
 
 ```bash
-pnpm --filter @deploid/core build
+pnpm --filter @deploid/cli build
 node examples/api-client/doctor.mjs /path/to/project
 node examples/api-client/artifacts.mjs /path/to/project
 ```
@@ -46,4 +46,4 @@ deploid doctor --json
 an app can call the same core behavior directly.
 In this repo example, the script imports the local built core package from `packages/core/dist`.
 
-In an external app, you would install and import `@deploid/core` directly.
+In an external app, you would install and import `@deploid/cli` directly.

@@ -89,6 +89,7 @@
       <a href="#features" class="nav-link">features</a>
       <a href="#commands" class="nav-link">commands</a>
       <a href="#ship" class="nav-link">ship</a>
+      <a href="#changelog" class="nav-link">changelog</a>
       <a href="#install" class="nav-link">install</a>
     </div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
@@ -299,7 +300,7 @@
     <div>
       <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## PROGRAMMATIC API</div>
       <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 14px">Drive it from your own tooling.</h2>
-      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Import <span style="color:var(--accent)">@deploid/core</span> instead of shelling out — or run <span style="color:var(--amber)">deploid daemon</span> for a language-agnostic local HTTP interface.</p>
+      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Import <span style="color:var(--accent)">@deploid/cli</span> instead of shelling out — or run <span style="color:var(--amber)">deploid daemon</span> for a language-agnostic local HTTP interface.</p>
       <div style="border-radius:13px;overflow:hidden;border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow-panel)">
         <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel-head);border-bottom:1px solid var(--border-soft)">
           <span style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></span>
@@ -308,7 +309,7 @@
           <span style="margin-left:6px;font-size:11px;color:var(--muted-dim)">ship.ts</span>
         </div>
         <div style="padding:16px 18px;font-size:12px;line-height:1.85;overflow:auto">
-          <div><span style="color:#c678dd">import</span> { runDoctorCommand, inspectArtifacts } <span style="color:#c678dd">from</span> <span style="color:var(--green)">'@deploid/core'</span>;</div>
+          <div><span style="color:#c678dd">import</span> { runDoctorCommand, inspectArtifacts } <span style="color:#c678dd">from</span> <span style="color:var(--green)">'@deploid/cli'</span>;</div>
           <div style="height:8px"></div>
           <div><span style="color:var(--muted-dim)">// full doctor check, JSON out</span></div>
           <div><span style="color:#c678dd">await</span> <span style="color:#61afef">runDoctorCommand</span>({ cwd, doctorOptions: { json: <span style="color:var(--amber)">true</span> } });</div>
@@ -320,8 +321,8 @@
     </div>
     <div>
       <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## PLUGIN PIPELINE</div>
-      <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 14px">Every step is a plugin.</h2>
-      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Assets, packaging, build, deploy, publish — all plugins on one pipeline. Scaffold your own custom step:</p>
+      <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0 0 14px">One package. Modular inside.</h2>
+      <p style="font-size:14px;line-height:1.7;color:var(--muted);margin:0 0 18px">Assets, packaging, build, deploy, and publish ship inside <span style="color:var(--accent)">@deploid/cli</span>. Keep the extensible pipeline without installing fifteen packages — or scaffold a custom step:</p>
       <div style="border:1px dashed var(--border-strong);border-radius:10px;padding:13px 15px;font-size:12.5px;margin-bottom:14px">
         <span style="color:var(--green)">➜</span> <span style="color:var(--accent)">deploid</span> plugin init my-custom-step
       </div>
@@ -330,11 +331,25 @@
   </div>
 </section>
 
+<!-- ===== CHANGELOG ===== -->
+<section id="changelog" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 24px;position:relative;z-index:1">
+  <div style="display:flex;align-items:end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:20px">
+    <div>
+      <div style="font-size:12px;color:var(--green);letter-spacing:1px;margin-bottom:10px">## WHAT'S NEW</div>
+      <h2 style="font-size:clamp(23px,4.2vw,29px);font-weight:800;letter-spacing:-.8px;color:var(--ink-strong);margin:0">Latest changes, straight from the changelog.</h2>
+    </div>
+    <a href="https://github.com/vardirhq/deploid/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="btn-secondary" style="font-size:13px;padding:10px 14px;border:1px solid var(--border-strong);border-radius:9px;color:var(--ink)">Full changelog →</a>
+  </div>
+  <div id="changelog-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+    <div style="border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px;color:var(--muted)">Loading recent changes…</div>
+  </div>
+</section>
+
 <!-- ===== INSTALL / CTA ===== -->
 <section id="install" class="dp-sec" style="max-width:1180px;margin:0 auto;padding:56px 22px 30px;position:relative;z-index:1">
   <div style="border-radius:16px;border:1px solid rgba(139,157,255,.22);background:radial-gradient(600px 260px at 50% 0%,rgba(139,157,255,.12),transparent),var(--panel);padding:44px 28px;text-align:center;box-shadow:var(--cta-glow)">
     <h2 style="font-size:clamp(24px,5vw,32px);font-weight:800;letter-spacing:-1px;color:var(--ink-strong);margin:0 0 12px">Your web app is already an Android app.<br>It just doesn't know it yet.</h2>
-    <p style="font-size:14px;color:var(--muted);margin:0 0 26px">Node 18+ · Java 21+ · Android SDK. <span style="color:var(--green)">deploid doctor</span> checks the rest.</p>
+    <p style="font-size:14px;color:var(--muted);margin:0 0 26px">One npm package · Node 18+ · Java 21+ · Android SDK. <span style="color:var(--green)">deploid doctor</span> checks the rest.</p>
     <div style="display:inline-flex;align-items:stretch;gap:0;border:1px solid var(--border-strong);border-radius:11px;overflow:hidden;max-width:100%">
       <div style="padding:14px 18px;font-size:14px;color:var(--ink);background:var(--bg);overflow:auto;white-space:nowrap"><span style="color:var(--green)">$</span> npm install -g @deploid/cli</div>
       <button class="btn-primary copy-install" style="font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--on-accent);padding:0 18px"><span class="install-label">copy</span></button>
@@ -519,6 +534,44 @@
     setCopyLabel($("#copy-active"), "copy");
   }
   setActive(0);
+
+  /* ---------- changelog ---------- */
+  function renderChangelog(markdown){
+    var sections = [];
+    var current = null;
+    var category = '';
+    markdown.split(/\r?\n/).forEach(function(line){
+      if (/^##\s+/.test(line)){
+        if (sections.length >= 2) return;
+        current = { title: line.replace(/^##\s+/, ''), items: [] };
+        sections.push(current);
+        category = '';
+      } else if (current && /^###\s+/.test(line)){
+        category = line.replace(/^###\s+/, '');
+      } else if (current && /^-\s+/.test(line) && current.items.length < 6){
+        current.items.push({ category: category, text: line.replace(/^-\s+/, '').replace(/`/g, '') });
+      }
+    });
+    var grid = $("#changelog-grid");
+    grid.innerHTML = '';
+    sections.filter(function(section){ return section.items.length; }).forEach(function(section){
+      var card = el('article', { style:'border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px;box-shadow:var(--shadow-panel)' });
+      card.appendChild(el('div', { style:'font-size:12px;color:var(--accent);font-weight:700;margin-bottom:12px' }, esc(section.title)));
+      section.items.forEach(function(item){
+        var label = item.category ? '<span style="color:var(--green);font-size:10px;letter-spacing:.5px">'+esc(item.category.toUpperCase())+'</span> ' : '';
+        card.appendChild(el('div', { style:'font-size:12.5px;line-height:1.55;color:var(--muted);margin-top:9px' }, label + esc(item.text)));
+      });
+      grid.appendChild(card);
+    });
+    if (!grid.children.length) throw new Error('No changelog entries found');
+  }
+  fetch('https://raw.githubusercontent.com/vardirhq/deploid/main/CHANGELOG.md')
+    .then(function(response){ if (!response.ok) throw new Error('Changelog unavailable'); return response.text(); })
+    .then(renderChangelog)
+    .catch(function(){
+      var grid = $("#changelog-grid");
+      grid.innerHTML = '<div style="border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:18px;color:var(--muted)">Recent changes could not be loaded. <a href="https://github.com/vardirhq/deploid/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Open the full changelog →</a></div>';
+    });
 
   /* ---------- copy buttons ---------- */
   function copyText(t){ try { navigator.clipboard.writeText(t); } catch(e){} }

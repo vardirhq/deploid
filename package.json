@@ -13,13 +13,13 @@
   ],
   "author": "MadsenDev",
   "license": "MIT",
-  "homepage": "https://github.com/MadsenDev/deploid",
+  "homepage": "https://github.com/vardirhq/deploid",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MadsenDev/deploid.git"
+    "url": "https://github.com/vardirhq/deploid.git"
   },
   "bugs": {
-    "url": "https://github.com/MadsenDev/deploid/issues"
+    "url": "https://github.com/vardirhq/deploid/issues"
   },
   "private": true,
   "packageManager": "pnpm@9.12.0",
@@ -28,10 +28,7 @@
   ],
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "publish": "pnpm -r publish",
-    "changeset": "changeset",
-    "version-packages": "changeset version"
+    "test": "pnpm -r test"
   },
   "files": [
     "packages/cli/dist/",
@@ -45,7 +42,6 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.7",
     "@types/node": "^24.9.1",
     "typescript": "^5.9.3"
   }

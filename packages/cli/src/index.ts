@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { createContext, loadConfig, runPipeline, loadPlugin, runPluginCommand, runDoctorCommand } from '@deploid/core';
+import { createContext, loadConfig, runPipeline, loadPlugin, runPluginCommand, runDoctorCommand } from '#core';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

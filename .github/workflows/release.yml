@@ -42,19 +42,28 @@ jobs:
       - name: Test
         run: pnpm -r --if-present test
       - name: Assemble single-package distribution
-        run: pnpm --config.node-linker=hoisted --filter @deploid/cli deploy --prod .release/cli
+        run: pnpm --filter @deploid/cli deploy --prod .release/cli
       - name: Derive release version
         run: node scripts/prepare-release.mjs .release/cli
       - name: Pack and inspect npm tarball
         working-directory: .release/cli
         run: |
           mkdir -p ../artifacts
-          pnpm --config.node-linker=hoisted pack --pack-destination ../artifacts
+          pnpm pack --pack-destination ../artifacts
           tarball=$(find ../artifacts -name '*.tgz' -print -quit)
+          tarball=$(realpath "$tarball")
           tar -tzf "$tarball" > ../tarball-contents.txt
-          grep -q 'package/node_modules/@deploid/core/' ../tarball-contents.txt
-          grep -q 'package/node_modules/@deploid/plugin-assets/' ../tarball-contents.txt
-          grep -q 'package/node_modules/@deploid/plugin-publish/' ../tarball-contents.txt
+          grep -q 'package/dist/internal/core/index.js' ../tarball-contents.txt
+          grep -q 'package/dist/internal/plugins/assets/index.js' ../tarball-contents.txt
+          grep -q 'package/dist/internal/plugins/publish/index.js' ../tarball-contents.txt
+          test "$(stat -c%s "$tarball")" -lt 2000000
+          smoke=$(mktemp -d)
+          npm install --prefix "$smoke" "$tarball"
+          "$smoke/node_modules/.bin/deploid" --version
+          printf "export default { appName: 'Smoke', appId: 'com.example.smoke', web: { framework: 'static', buildCommand: 'true', webDir: 'public' }, android: { packaging: 'capacitor' } };\n" > "$smoke/deploid.config.mjs"
+          (cd "$smoke" && ./node_modules/.bin/deploid plugin --list) | tee ../plugin-list.txt
+          grep -q 'Built in' ../plugin-list.txt
+          (cd "$smoke" && node --input-type=module -e "import('@deploid/cli').then((api) => { if (!api.runPluginCommand) process.exit(1); })")
 
   publish:
     if: >-
@@ -84,7 +93,7 @@ jobs:
       - name: Build
         run: pnpm -r build
       - name: Assemble single-package distribution
-        run: pnpm --config.node-linker=hoisted --filter @deploid/cli deploy --prod .release/cli
+        run: pnpm --filter @deploid/cli deploy --prod .release/cli
       - name: Derive release version
         id: release
         run: echo "version=$(node scripts/prepare-release.mjs .release/cli)" >> "$GITHUB_OUTPUT"
@@ -92,7 +101,7 @@ jobs:
         working-directory: .release/cli
         run: |
           mkdir -p ../artifacts
-          pnpm --config.node-linker=hoisted pack --pack-destination ../artifacts
+          pnpm pack --pack-destination ../artifacts
       - name: Publish to npm with provenance
         run: npm publish .release/artifacts/*.tgz --access public --provenance
       - name: Create GitHub release
